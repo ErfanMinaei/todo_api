@@ -21,10 +21,10 @@ model User {
   username   String  @unique
   password   String
 
-  todoLists TodoLists[]
+  todoLists UserTodoList[]
 }
 
-model TodoLists {
+model UserTodoList {
   id         Int      @id @default(autoincrement())
   title      String
   created_at DateTime @default(now())
@@ -32,10 +32,10 @@ model TodoLists {
   userId Int
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  todos Todos[]
+  todos Todo[]
 }
 
-model Todos {
+model Todo {
   id          Int      @id @default(autoincrement())
   title       String
   description String   @db.Text
@@ -43,5 +43,5 @@ model Todos {
   deadline    DateTime
 
   todoListId Int
-  todoList   TodoLists @relation(fields: [todoListId], references: [id], onDelete: Cascade)
+  todoList   UserTodoList @relation(fields: [todoListId], references: [id], onDelete: Cascade)
 }
