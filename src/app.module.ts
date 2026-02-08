@@ -4,6 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -14,7 +15,8 @@ import { join } from 'path';
         path: join(process.cwd(), 'src/graphql.ts'),
         outputAs: 'class',
       },
-    })
+    }),
+    PrismaModule
   ],
   controllers: [AppController],
   providers: [AppService],
