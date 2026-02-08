@@ -1,0 +1,71 @@
+type User {
+  id: Int!
+  first_name: String!
+  last_name: String
+  username: String!
+  todoLists: [TodoList!]!
+}
+
+type TodoList {
+  id: Int!
+  title: String!
+  created_at: DateTime!
+  userId: Int!
+  user: User!
+  todos: [Todo!]!
+}
+
+type Todo {
+  id: Int!
+  title: String!
+  description: String!
+  is_done: Boolean!
+  deadline: DateTime!
+  todoListId: Int!
+  todoList: TodoList!
+}
+
+scalar DateTime
+
+type Query {
+  users: [User!]!
+  user(id: Int!): User
+  todoLists(userId: Int!): [TodoList!]!
+  todoList(id: Int!): TodoList
+  todos(todoListId: Int!): [Todo!]!
+  todo(id: Int!): Todo
+}
+
+type Mutation {
+  createUser(input: CreateUserInput!): User!
+  createTodoList(input: CreateTodoListInput!): TodoList!
+  createTodo(input: CreateTodoInput!): Todo!
+  updateTodo(id: Int!, input: UpdateTodoInput!): Todo!
+  deleteTodo(id: Int!): Boolean!
+}
+
+input CreateUserInput {
+  first_name: String!
+  last_name: String
+  username: String!
+  password: String!
+}
+
+input CreateTodoListInput {
+  title: String!
+  userId: Int!
+}
+
+input CreateTodoInput {
+  title: String!
+  description: String!
+  deadline: DateTime!
+  todoListId: Int!
+}
+
+input UpdateTodoInput {
+  title: String
+  description: String
+  is_done: Boolean
+  deadline: DateTime
+}
