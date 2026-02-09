@@ -7,6 +7,7 @@ import { join } from 'path';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
+import { TodoListsModule } from './todo-lists/todo-lists.module';
 
 @Module({
   imports: [
@@ -22,7 +23,8 @@ import { UsersModule } from './users/users.module';
       },
     }),
     PrismaModule,
-    UsersModule
+    UsersModule,
+    TodoListsModule
   ],
   controllers: [AppController],
   providers: [AppService],
