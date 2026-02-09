@@ -14,6 +14,13 @@ export class UsersService {
     });
   }
 
+  async findByUsername(username: string) {
+  return this.prisma.user.findUnique({
+    where: { username },
+    include: { todoLists: true },
+  });
+  }
+
   async create(input: CreateUserInput) {
     const hashedPassword = await bcrypt.hash(input.password, 10);
     

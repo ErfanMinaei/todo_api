@@ -12,7 +12,10 @@ export class UsersResolver {
   async user(@Args('id') id: number) {
     return this.usersService.findOne(id);
   }
-
+  @Query('userByUsername')
+  async userByUsername(@Args('username') username: string) {
+    return this.usersService.findByUsername(username);
+  }
   @Mutation('createUser')
   async createUser(
     @Args('input', new JoiValidationPipe(createUserSchema)) input: CreateUserInput,

@@ -73,6 +73,8 @@ export abstract class IQuery {
     abstract todos(todoListId: number): Todo[] | Promise<Todo[]>;
 
     abstract todo(id: number): Nullable<Todo> | Promise<Nullable<Todo>>;
+
+    abstract userByUsername(username: string): Nullable<User> | Promise<Nullable<User>>;
 }
 
 export abstract class IMutation {

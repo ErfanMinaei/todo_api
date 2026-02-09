@@ -69,3 +69,12 @@ input UpdateTodoInput {
   is_done: Boolean
   deadline: DateTime
 }
+
+type Query {
+  user(id: Int!): User
+  userByUsername(username: String!): User
+  todoLists(userId: Int!): [TodoList!]!
+  todoList(id: Int!): TodoList
+  todos(todoListId: Int!): [Todo!]!
+  todo(id: Int!): Todo
+}
