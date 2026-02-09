@@ -1,12 +1,12 @@
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
-import { TodosService } from './todo.service';
+import { TodoService } from './todo.service';
 import { CreateTodoInput, UpdateTodoInput } from '../graphql';
 import { JoiValidationPipe } from '../validation/joi-validation.pipe';
 import { createTodoSchema, updateTodoSchema } from '../validation/schemas';
 
 @Resolver('Todo')
-export class TodosResolver {
-  constructor(private todosService: TodosService) {}
+export class TodoResolver {
+  constructor(private todosService: TodoService) {}
 
   @Query('todos')
   async todos(@Args('todoListId') todoListId: number) {

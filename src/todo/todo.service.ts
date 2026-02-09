@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateTodoInput, UpdateTodoInput } from '../graphql';
 
 @Injectable()
-export class TodosService {
+export class TodoService {
   constructor(private prisma: PrismaService) {}
 
   async findByTodoList(todoListId: number) {
