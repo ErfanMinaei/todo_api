@@ -8,6 +8,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { TodoListsModule } from './todo-lists/todo-lists.module';
+import { TodoModule } from './todo/todo.module';
 
 @Module({
   imports: [
@@ -24,7 +25,8 @@ import { TodoListsModule } from './todo-lists/todo-lists.module';
     }),
     PrismaModule,
     UsersModule,
-    TodoListsModule
+    TodoListsModule,
+    TodoModule
   ],
   controllers: [AppController],
   providers: [AppService],
