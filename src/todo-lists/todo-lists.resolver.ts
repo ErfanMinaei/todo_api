@@ -6,7 +6,7 @@ import { createTodoListSchema } from '../validation/schemas';
 
 @Resolver('TodoList')
 export class TodoListsResolver {
-  constructor(private todoListsService: TodoListsService) {}
+  constructor(private todoListsService: TodoListsService) { }
 
   @Query('todoLists')
   async todoLists(@Args('userId') userId: number) {
@@ -22,6 +22,6 @@ export class TodoListsResolver {
   async createTodoList(
     @Args('input', new JoiValidationPipe(createTodoListSchema)) input: CreateTodoListInput,
   ) {
-    return this.todoListsService.create(input);
+    return this.todoListsService.create(input);  //will fix this error after applying gurads 
   }
 }

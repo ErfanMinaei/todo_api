@@ -15,9 +15,13 @@ export class CreateUserInput {
     password: string;
 }
 
+export class LoginInput {
+    username: string;
+    password: string;
+}
+
 export class CreateTodoListInput {
     title: string;
-    userId: number;
 }
 
 export class CreateTodoInput {
@@ -61,24 +65,29 @@ export class Todo {
     todoList: TodoList;
 }
 
-export abstract class IQuery {
-    abstract users(): User[] | Promise<User[]>;
+export class AuthPayload {
+    token: string;
+    user: User;
+}
 
+export abstract class IQuery {
     abstract user(id: number): Nullable<User> | Promise<Nullable<User>>;
 
-    abstract todoLists(userId: number): TodoList[] | Promise<TodoList[]>;
+    abstract userByUsername(username: string): Nullable<User> | Promise<Nullable<User>>;
+
+    abstract todoLists(): TodoList[] | Promise<TodoList[]>;
 
     abstract todoList(id: number): Nullable<TodoList> | Promise<Nullable<TodoList>>;
 
     abstract todos(todoListId: number): Todo[] | Promise<Todo[]>;
 
     abstract todo(id: number): Nullable<Todo> | Promise<Nullable<Todo>>;
-
-    abstract userByUsername(username: string): Nullable<User> | Promise<Nullable<User>>;
 }
 
 export abstract class IMutation {
     abstract createUser(input: CreateUserInput): User | Promise<User>;
+
+    abstract login(input: LoginInput): AuthPayload | Promise<AuthPayload>;
 
     abstract createTodoList(input: CreateTodoListInput): TodoList | Promise<TodoList>;
 

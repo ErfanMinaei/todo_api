@@ -4,7 +4,7 @@ import { CreateTodoListInput } from '../graphql';
 
 @Injectable()
 export class TodoListsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async findByUser(userId: number) {
     return this.prisma.userTodoList.findMany({
@@ -20,9 +20,12 @@ export class TodoListsService {
     });
   }
 
-  async create(input: CreateTodoListInput) {
+  async create(input: CreateTodoListInput, userId: number) {
     return this.prisma.userTodoList.create({
-      data: input,
+      data: {
+        title: input.title,
+        userId,
+      },
       include: { todos: true, user: true },
     });
   }

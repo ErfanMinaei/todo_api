@@ -33,9 +33,9 @@ type AuthPayload {
 scalar DateTime
 
 type Query {
-  users: [User!]!
   user(id: Int!): User
-  todoLists(userId: Int!): [TodoList!]!
+  userByUsername(username: String!): User
+  todoLists: [TodoList!]!
   todoList(id: Int!): TodoList
   todos(todoListId: Int!): [Todo!]!
   todo(id: Int!): Todo
@@ -43,6 +43,7 @@ type Query {
 
 type Mutation {
   createUser(input: CreateUserInput!): User!
+  login(input: LoginInput!): AuthPayload!
   createTodoList(input: CreateTodoListInput!): TodoList!
   createTodo(input: CreateTodoInput!): Todo!
   updateTodo(id: Int!, input: UpdateTodoInput!): Todo!
@@ -63,7 +64,6 @@ input LoginInput {
 
 input CreateTodoListInput {
   title: String!
-  userId: Int!
 }
 
 input CreateTodoInput {
@@ -78,13 +78,4 @@ input UpdateTodoInput {
   description: String
   is_done: Boolean
   deadline: DateTime
-}
-
-type Query {
-  user(id: Int!): User
-  userByUsername(username: String!): User
-  todoLists(userId: Int!): [TodoList!]!
-  todoList(id: Int!): TodoList
-  todos(todoListId: Int!): [Todo!]!
-  todo(id: Int!): Todo
 }

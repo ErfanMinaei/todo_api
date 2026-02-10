@@ -7,6 +7,11 @@ export const createUserSchema = Joi.object({
   password: Joi.string().required().min(8).max(100),
 });
 
+export const loginSchema = Joi.object({
+  username: Joi.string().required(),
+  password: Joi.string().required(),
+});
+
 export const createTodoListSchema = Joi.object({
   title: Joi.string().required().min(1).max(100),
   userId: Joi.number().integer().positive().required(),
