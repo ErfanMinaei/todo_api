@@ -9,6 +9,7 @@ import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { TodoListsModule } from './todo-lists/todo-lists.module';
 import { TodoModule } from './todo/todo.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -26,7 +27,8 @@ import { TodoModule } from './todo/todo.module';
     PrismaModule,
     UsersModule,
     TodoListsModule,
-    TodoModule
+    TodoModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],
