@@ -11,7 +11,7 @@ export class AuthResolver {
 
     @Mutation('login')
     async login(
-        @Args('inut', new JoiValidationPipe(loginSchema)) input: LoginInput
+        @Args('input', new JoiValidationPipe(loginSchema)) input: LoginInput
     ){
         return this.authService.login(input.username, input.password);
     }

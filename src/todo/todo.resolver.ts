@@ -7,7 +7,7 @@ import { createTodoSchema, updateTodoSchema } from '../validation/schemas';
 import { GqlAuthGuard } from '../auth/gql-auth.guard';
 
 @Resolver('Todo')
-export class TodosResolver {
+export class TodoResolver {
   constructor(private todosService: TodoService) {}
 
   @Query('todos')
