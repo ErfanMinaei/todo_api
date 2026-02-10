@@ -25,6 +25,11 @@ type Todo {
   todoList: TodoList!
 }
 
+type AuthPayload {
+  token: String!
+  user: User!
+}
+
 scalar DateTime
 
 type Query {
@@ -47,6 +52,11 @@ type Mutation {
 input CreateUserInput {
   first_name: String!
   last_name: String
+  username: String!
+  password: String!
+}
+
+input LoginInput {
   username: String!
   password: String!
 }
