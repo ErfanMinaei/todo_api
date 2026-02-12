@@ -14,13 +14,13 @@ import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true, 
+      isGlobal: true,
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       typePaths: ['./**/*.graphql'],
-      definitions:{
-        path: join(process.cwd(), 'src/graphql.ts'),
+      definitions: {
+        path: join(process.cwd(), 'src', 'graphql.ts'),
         outputAs: 'class',
       },
       context: ({ req }) => ({ req }),
