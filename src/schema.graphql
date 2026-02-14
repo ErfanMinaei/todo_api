@@ -45,9 +45,15 @@ type Mutation {
   createUser(input: CreateUserInput!): User!
   login(input: LoginInput!): AuthPayload!
   createTodoList(input: CreateTodoListInput!): TodoList!
+  updateTodoList(id: Int!,input: UpdateTodoListInput!): TodoList!
+  deleteTodoList(id: Int!): Boolean!
   createTodo(input: CreateTodoInput!): Todo!
   updateTodo(id: Int!, input: UpdateTodoInput!): Todo!
   deleteTodo(id: Int!): Boolean!
+}
+
+input UpdateTodoListInput {
+  title : String
 }
 
 input CreateUserInput {

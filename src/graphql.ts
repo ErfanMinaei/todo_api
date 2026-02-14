@@ -8,6 +8,10 @@
 /* tslint:disable */
 /* eslint-disable */
 
+export class UpdateTodoListInput {
+    title?: Nullable<string>;
+}
+
 export class CreateUserInput {
     first_name: string;
     last_name?: Nullable<string>;
@@ -90,6 +94,10 @@ export abstract class IMutation {
     abstract login(input: LoginInput): AuthPayload | Promise<AuthPayload>;
 
     abstract createTodoList(input: CreateTodoListInput): TodoList | Promise<TodoList>;
+
+    abstract updateTodoList(id: number, input: UpdateTodoListInput): TodoList | Promise<TodoList>;
+
+    abstract deleteTodoList(id: number): boolean | Promise<boolean>;
 
     abstract createTodo(input: CreateTodoInput): Todo | Promise<Todo>;
 
