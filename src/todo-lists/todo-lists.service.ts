@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { CreateTodoListInput } from '../graphql';
+import { CreateTodoListInput, UpdateTodoListInput } from '../graphql';
 
 @Injectable()
 export class TodoListsService {
@@ -28,5 +28,22 @@ export class TodoListsService {
       },
       include: { todos: true, user: true },
     });
+  }
+
+  async update(input: UpdateTodoListInput, id: number) {
+    const updateData = Object.fromEntries(
+      Object.entries(input).filter(([_, value]) => value !== null && value !== undefined)
+    );
+
+    return this.prisma.userTodoList.update({
+      where: { id },
+      data: updateData,
+      include: { todos: true },
+    });
+  }
+
+  async delete(id: number) {
+    await this.prisma.userTodoList.delete({ where: { id } });
+    return true;
   }
 }
