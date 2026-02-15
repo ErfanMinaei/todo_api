@@ -8,19 +8,6 @@ import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 export class UsersService {
   constructor(private prisma: PrismaService) { }
 
-  async findOne(id: number) {
-    return this.prisma.user.findUnique({
-      where: { id },
-      include: { todoLists: true },
-    });
-  }
-
-  async findByUsername(username: string) {
-    return this.prisma.user.findUnique({
-      where: { username },
-    });
-  }
-
   async create(input: CreateUserInput) {
     const hashedPassword = await bcrypt.hash(input.password, 10);
 

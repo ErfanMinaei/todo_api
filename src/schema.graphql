@@ -33,8 +33,6 @@ type AuthPayload {
 scalar DateTime
 
 type Query {
-  user(id: Int!): User
-  userByUsername(username: String!): User
   todoLists: [TodoList!]!
   todoList(id: Int!): TodoList
   todos(todoListId: Int!): [Todo!]!

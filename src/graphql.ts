@@ -75,10 +75,6 @@ export class AuthPayload {
 }
 
 export abstract class IQuery {
-    abstract user(id: number): Nullable<User> | Promise<Nullable<User>>;
-
-    abstract userByUsername(username: string): Nullable<User> | Promise<Nullable<User>>;
-
     abstract todoLists(): TodoList[] | Promise<TodoList[]>;
 
     abstract todoList(id: number): Nullable<TodoList> | Promise<Nullable<TodoList>>;
