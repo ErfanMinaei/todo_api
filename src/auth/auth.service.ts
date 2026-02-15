@@ -13,7 +13,6 @@ export class AuthService {
     async login(username: string, password: string) {
         const user = await this.prisma.user.findUnique({
             where: { username },
-            include: { todoLists: true }
         });
 
         if (!user) {
@@ -22,7 +21,7 @@ export class AuthService {
 
         const isPasswordValied = await bcrypt.compare(password, user.password);
         if (!isPasswordValied) {
-            throw new UnauthorizedException('Incorrect password')
+            throw new UnauthorizedException('Invalid credentials')
         }
 
         const token = this.jwtService.sign({
@@ -30,6 +29,14 @@ export class AuthService {
             username: user.username
         });
 
-        return { token, user }
+        return {
+            token,
+            user: {
+                id: user.id,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                username: user.username
+            }
+        }
     }
 }
