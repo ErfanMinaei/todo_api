@@ -1,19 +1,13 @@
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
-import { UseGuards, UsePipes } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
 import { TodoListsService } from './todo-lists.service';
 import { CreateTodoListInput, UpdateTodoListInput } from '../graphql';
-import { JoiValidationPipe } from '../validation/joi-validation.pipe';
-import {
-  createTodoListSchema,
-  updateTodoListSchema,
-} from '../validation/schemas';
 import { GqlAuthGuard } from '../auth/gql-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
-import { number } from 'joi';
 
 @Resolver('TodoList')
 export class TodoListsResolver {
-  constructor(private todoListsService: TodoListsService) {}
+  constructor(readonly todoListsService: TodoListsService) {}
 
   @Query('todoLists')
   @UseGuards(GqlAuthGuard)
@@ -24,7 +18,7 @@ export class TodoListsResolver {
   @Mutation('createTodoList')
   @UseGuards(GqlAuthGuard)
   async createTodoList(
-    @Args('input', new JoiValidationPipe(createTodoListSchema))
+    @Args('input')
     input: CreateTodoListInput,
     @CurrentUser() user: any,
   ) {
@@ -35,7 +29,7 @@ export class TodoListsResolver {
   @UseGuards(GqlAuthGuard)
   async updateTodoList(
     @Args('id') id: number,
-    @Args('input', new JoiValidationPipe(updateTodoListSchema))
+    @Args('input')
     input: UpdateTodoListInput,
   ) {
     return this.todoListsService.update(input, id);

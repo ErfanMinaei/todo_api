@@ -2,13 +2,12 @@ import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { TodoService } from './todo.service';
 import { CreateTodoInput, UpdateTodoInput } from '../graphql';
-import { JoiValidationPipe } from '../validation/joi-validation.pipe';
-import { createTodoSchema, updateTodoSchema } from '../validation/schemas';
+
 import { GqlAuthGuard } from '../auth/gql-auth.guard';
 
 @Resolver('Todo')
 export class TodoResolver {
-  constructor(private todosService: TodoService) {}
+  constructor(readonly todosService: TodoService) {}
 
   @Query('todos')
   @UseGuards(GqlAuthGuard)
@@ -25,7 +24,7 @@ export class TodoResolver {
   @Mutation('createTodo')
   @UseGuards(GqlAuthGuard)
   async createTodo(
-    @Args('input', new JoiValidationPipe(createTodoSchema))
+    @Args('input')
     input: CreateTodoInput,
   ) {
     return this.todosService.create(input);
@@ -35,7 +34,7 @@ export class TodoResolver {
   @UseGuards(GqlAuthGuard)
   async updateTodo(
     @Args('id') id: number,
-    @Args('input', new JoiValidationPipe(updateTodoSchema))
+    @Args('input')
     input: UpdateTodoInput,
   ) {
     return this.todosService.update(id, input);
