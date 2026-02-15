@@ -1,0 +1,36 @@
+type Todo {
+  id: Int!
+  title: String!
+  description: String!
+  is_done: Boolean!
+  deadline: DateTime!
+  todoListId: Int!
+  todoList: TodoList!
+}
+
+scalar DateTime
+
+type Query {
+  todos(todoListId: Int!): [Todo!]!
+  todo(id: Int!): Todo
+}
+
+type Mutation {
+  createTodo(input: CreateTodoInput!): Todo!
+  updateTodo(id: Int!, input: UpdateTodoInput!): Todo!
+  deleteTodo(id: Int!): Boolean!
+}
+
+input CreateTodoInput {
+  title: String!
+  description: String!
+  deadline: DateTime!
+  todoListId: Int!
+}
+
+input UpdateTodoInput {
+  title: String
+  description: String
+  is_done: Boolean
+  deadline: DateTime
+}

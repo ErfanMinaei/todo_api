@@ -1,0 +1,28 @@
+type TodoList {
+  id: Int!
+  title: String!
+  created_at: DateTime!
+  userId: Int!
+  user: User!
+  todos: [Todo!]!
+}
+
+scalar DateTime
+
+type Query {
+  todoLists: [TodoList!]!
+}
+
+type Mutation {
+  createTodoList(input: CreateTodoListInput!): TodoList!
+  updateTodoList(id: Int!,input: UpdateTodoListInput!): TodoList!
+  deleteTodoList(id: Int!): Boolean!
+}
+
+input UpdateTodoListInput {
+  title : String
+}
+
+input CreateTodoListInput {
+  title: String!
+}
