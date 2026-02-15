@@ -18,12 +18,6 @@ export class TodoListsResolver {
     return this.todoListsService.findByUser(user.id);
   }
 
-  @Query('todoList')
-  @UseGuards(GqlAuthGuard)
-  async todoList(@Args('id') id: number) {
-    return this.todoListsService.findOne(id);
-  }
-
   @Mutation('createTodoList')
   @UseGuards(GqlAuthGuard)
   async createTodoList(

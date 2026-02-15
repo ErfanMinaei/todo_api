@@ -77,8 +77,6 @@ export class AuthPayload {
 export abstract class IQuery {
     abstract todoLists(): TodoList[] | Promise<TodoList[]>;
 
-    abstract todoList(id: number): Nullable<TodoList> | Promise<Nullable<TodoList>>;
-
     abstract todos(todoListId: number): Todo[] | Promise<Todo[]>;
 
     abstract todo(id: number): Nullable<Todo> | Promise<Nullable<Todo>>;

@@ -34,7 +34,6 @@ scalar DateTime
 
 type Query {
   todoLists: [TodoList!]!
-  todoList(id: Int!): TodoList
   todos(todoListId: Int!): [Todo!]!
   todo(id: Int!): Todo
 }

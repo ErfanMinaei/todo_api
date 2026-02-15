@@ -13,13 +13,6 @@ export class TodoListsService {
     });
   }
 
-  async findOne(id: number) {
-    return this.prisma.userTodoList.findUnique({
-      where: { id },
-      include: { todos: true, user: true },
-    });
-  }
-
   async create(input: CreateTodoListInput, userId: number) {
     return this.prisma.userTodoList.create({
       data: {
