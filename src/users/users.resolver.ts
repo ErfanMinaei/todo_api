@@ -10,7 +10,8 @@ export class UsersResolver {
 
   @Mutation('createUser')
   async createUser(
-    @Args('input', new JoiValidationPipe(createUserSchema)) input: CreateUserInput,
+    @Args('input', new JoiValidationPipe(createUserSchema))
+    input: CreateUserInput,
   ) {
     return this.usersService.create(input);
   }

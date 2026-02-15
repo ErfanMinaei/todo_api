@@ -25,7 +25,8 @@ export class TodoResolver {
   @Mutation('createTodo')
   @UseGuards(GqlAuthGuard)
   async createTodo(
-    @Args('input', new JoiValidationPipe(createTodoSchema)) input: CreateTodoInput,
+    @Args('input', new JoiValidationPipe(createTodoSchema))
+    input: CreateTodoInput,
   ) {
     return this.todosService.create(input);
   }
@@ -34,7 +35,8 @@ export class TodoResolver {
   @UseGuards(GqlAuthGuard)
   async updateTodo(
     @Args('id') id: number,
-    @Args('input', new JoiValidationPipe(updateTodoSchema)) input: UpdateTodoInput,
+    @Args('input', new JoiValidationPipe(updateTodoSchema))
+    input: UpdateTodoInput,
   ) {
     return this.todosService.update(id, input);
   }

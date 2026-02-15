@@ -5,6 +5,6 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 
 @Module({
   imports: [PrismaModule],
-  providers: [TodoListsResolver, TodoListsService]
+  providers: [TodoListsResolver, TodoListsService],
 })
 export class TodoListsModule {}

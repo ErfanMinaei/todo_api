@@ -29,7 +29,9 @@ export class TodoService {
 
   async update(id: number, input: UpdateTodoInput) {
     const updateData = Object.fromEntries(
-      Object.entries(input).filter(([_, value]) => value !== null && value !== undefined)
+      Object.entries(input).filter(
+        ([_, value]) => value !== null && value !== undefined,
+      ),
     );
 
     return this.prisma.todo.update({

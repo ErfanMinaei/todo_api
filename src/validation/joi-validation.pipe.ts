@@ -11,7 +11,9 @@ export class JoiValidationPipe implements PipeTransform {
     });
 
     if (error) {
-      const errorMessages = error.details.map((detail) => detail.message).join(', ');
+      const errorMessages = error.details
+        .map((detail) => detail.message)
+        .join(', ');
       throw new BadRequestException(`Validation failed: ${errorMessages}`);
     }
 

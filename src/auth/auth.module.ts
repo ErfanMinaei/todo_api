@@ -7,7 +7,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './jwt.strategy';
 import { ConfigService } from '@nestjs/config';
 
-
 @Module({
   imports: [
     PrismaModule,
@@ -16,12 +15,11 @@ import { ConfigService } from '@nestjs/config';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: config.get('JWT_EXPIRES_IN'), },
+        signOptions: { expiresIn: config.get('JWT_EXPIRES_IN') },
       }),
-    })
+    }),
   ],
   providers: [AuthService, AuthResolver, JwtStrategy],
-  exports: [AuthService]
+  exports: [AuthService],
 })
-export class AuthModule { }
-
+export class AuthModule {}

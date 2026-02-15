@@ -29,10 +29,9 @@ import { AuthModule } from './auth/auth.module';
     UsersModule,
     TodoListsModule,
     TodoModule,
-    AuthModule
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule { }
-
+export class AppModule {}
