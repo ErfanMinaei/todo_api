@@ -1,15 +1,15 @@
 import { ConflictException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserInput } from '../graphql';
-import * as bcrypt from 'bcrypt';
+import { hash } from 'bcrypt';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(readonly prisma: PrismaService) {}
 
   async create(input: CreateUserInput) {
-    const hashedPassword = await bcrypt.hash(input.password, 10);
+    const hashedPassword = await hash(input.password, 10);
 
     try {
       return await this.prisma.user.create({
