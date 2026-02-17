@@ -36,8 +36,8 @@ export class UpdateTodoInput {
 }
 
 export class CreateUserInput {
-    first_name: string;
-    last_name?: Nullable<string>;
+    firstName: string;
+    lastName?: Nullable<string>;
     username: string;
     password: string;
 }
@@ -94,8 +94,8 @@ export class Todo {
 
 export class User {
     id: number;
-    first_name: string;
-    last_name?: Nullable<string>;
+    firstName: string;
+    lastName?: Nullable<string>;
     username: string;
     todoLists: TodoList[];
 }

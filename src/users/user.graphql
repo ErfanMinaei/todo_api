@@ -1,7 +1,7 @@
 type User {
   id: Int!
-  first_name: String!
-  last_name: String
+  firstName: String!
+  lastName: String
   username: String!
   todoLists: [TodoList!]!
 }
@@ -11,8 +11,8 @@ type Mutation {
 }
 
 input CreateUserInput {
-  first_name: String!
-  last_name: String
+  firstName: String!
+  lastName: String
   username: String!
   password: String!
 }
