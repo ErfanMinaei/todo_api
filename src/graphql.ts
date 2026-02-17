@@ -8,100 +8,95 @@
 /* eslint-disable */
 
 export class LoginInput {
-  username: string;
-  password: string;
+    username: string;
+    password: string;
 }
 
 export class UpdateTodoListInput {
-  title?: Nullable<string>;
+    title?: Nullable<string>;
 }
 
 export class CreateTodoListInput {
-  title: string;
+    title: string;
 }
 
 export class CreateTodoInput {
-  title: string;
-  description: string;
-  deadline: DateTime;
-  todoListId: number;
+    title: string;
+    description: string;
+    deadline: DateTime;
+    todoListId: number;
 }
 
 export class UpdateTodoInput {
-  title?: Nullable<string>;
-  description?: Nullable<string>;
-  is_done?: Nullable<boolean>;
-  deadline?: Nullable<DateTime>;
+    title?: Nullable<string>;
+    description?: Nullable<string>;
+    is_done?: Nullable<boolean>;
+    deadline?: Nullable<DateTime>;
 }
 
 export class CreateUserInput {
-  firstName: string;
-  lastName?: Nullable<string>;
-  username: string;
-  password: string;
+    firstName: string;
+    lastName?: Nullable<string>;
+    username: string;
+    password: string;
 }
 
 export class AuthPayload {
-  token: string;
-  user: User;
+    token: string;
+    user: User;
 }
 
 export abstract class IMutation {
-  abstract login(input: LoginInput): AuthPayload | Promise<AuthPayload>;
+    abstract login(input: LoginInput): AuthPayload | Promise<AuthPayload>;
 
-  abstract createTodoList(
-    input: CreateTodoListInput,
-  ): TodoList | Promise<TodoList>;
+    abstract createTodoList(input: CreateTodoListInput): TodoList | Promise<TodoList>;
 
-  abstract updateTodoList(
-    id: number,
-    input: UpdateTodoListInput,
-  ): TodoList | Promise<TodoList>;
+    abstract updateTodoList(id: number, input: UpdateTodoListInput): TodoList | Promise<TodoList>;
 
-  abstract deleteTodoList(id: number): boolean | Promise<boolean>;
+    abstract deleteTodoList(id: number): boolean | Promise<boolean>;
 
-  abstract createTodo(input: CreateTodoInput): Todo | Promise<Todo>;
+    abstract createTodo(input: CreateTodoInput): Todo | Promise<Todo>;
 
-  abstract updateTodo(id: number, input: UpdateTodoInput): Todo | Promise<Todo>;
+    abstract updateTodo(id: number, input: UpdateTodoInput): Todo | Promise<Todo>;
 
-  abstract deleteTodo(id: number): boolean | Promise<boolean>;
+    abstract deleteTodo(id: number): boolean | Promise<boolean>;
 
-  abstract createUser(input: CreateUserInput): User | Promise<User>;
+    abstract createUser(input: CreateUserInput): User | Promise<User>;
 }
 
 export class TodoList {
-  id: number;
-  title: string;
-  created_at: DateTime;
-  userId: number;
-  user: User;
-  todos: Todo[];
+    id: number;
+    title: string;
+    created_at: DateTime;
+    userId: number;
+    user: User;
+    todos: Todo[];
 }
 
 export abstract class IQuery {
-  abstract todoLists(): TodoList[] | Promise<TodoList[]>;
+    abstract todoLists(): TodoList[] | Promise<TodoList[]>;
 
-  abstract todos(todoListId: number): Todo[] | Promise<Todo[]>;
+    abstract todos(todoListId: number): Todo[] | Promise<Todo[]>;
 
-  abstract todo(id: number): Nullable<Todo> | Promise<Nullable<Todo>>;
+    abstract todo(id: number): Nullable<Todo> | Promise<Nullable<Todo>>;
 }
 
 export class Todo {
-  id: number;
-  title: string;
-  description: string;
-  is_done: boolean;
-  deadline: DateTime;
-  todoListId: number;
-  todoList: TodoList;
+    id: number;
+    title: string;
+    description: string;
+    is_done: boolean;
+    deadline: DateTime;
+    todoListId: number;
+    todoList: TodoList;
 }
 
 export class User {
-  id: number;
-  firstName: string;
-  lastName?: Nullable<string>;
-  username: string;
-  todoLists?: Nullable<TodoList[]>;
+    id: number;
+    firstName: string;
+    lastName?: Nullable<string>;
+    username: string;
+    todoLists?: Nullable<TodoList[]>;
 }
 
 export type DateTime = any;

@@ -3,13 +3,14 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { join } from 'path';
+import { join } from 'node:path';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { TodoListsModule } from './todo-lists/todo-lists.module';
 import { TodoModule } from './todo/todo.module';
 import { AuthModule } from './auth/auth.module';
+import { GraphQLError } from 'graphql/error';
 
 @Module({
   imports: [
@@ -23,7 +24,23 @@ import { AuthModule } from './auth/auth.module';
         path: join(process.cwd(), 'src', 'graphql.ts'),
         outputAs: 'class',
       },
-      context: ({ req }) => ({ req }),
+      context: ({ req }: { req: Request }) => ({ req }),
+
+      formatError: (error: GraphQLError) => {
+        const extensions = error.extensions as {
+          originalError?: {
+            statusCode?: number;
+            message?: string;
+          };
+          status?: number;
+        };
+
+        return {
+          status:
+            extensions.originalError?.statusCode ?? extensions.status ?? 500,
+          message: extensions.originalError?.message ?? error.message,
+        };
+      },
     }),
     PrismaModule,
     UsersModule,
