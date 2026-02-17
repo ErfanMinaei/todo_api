@@ -15,19 +15,19 @@ datasource db {
 }
 
 model User {
-  id         Int     @id @default(autoincrement())
-  first_name String
-  last_name  String?
-  username   String  @unique
-  password   String
+  id        Int     @id @default(autoincrement())
+  firstName String
+  lastName  String?
+  username  String  @unique
+  password  String
 
   todoLists UserTodoList[]
 }
 
 model UserTodoList {
-  id         Int      @id @default(autoincrement())
-  title      String
-  created_at DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  title     String
+  createdAt DateTime @default(now())
 
   userId Int
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -39,7 +39,7 @@ model Todo {
   id          Int      @id @default(autoincrement())
   title       String
   description String   @db.Text
-  is_done     Boolean  @default(false)
+  isDone      Boolean  @default(false)
   deadline    DateTime
 
   todoListId Int
