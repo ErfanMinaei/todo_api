@@ -16,12 +16,12 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Incorrect username or password');
     }
 
     const isPasswordValied = await compare(password, user.password);
     if (!isPasswordValied) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Incorrect username or password');
     }
 
     const token = this.jwtService.sign({
