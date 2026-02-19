@@ -1,9 +1,10 @@
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { TodoListsService } from './todo-lists.service';
+import { TodoListsService } from './todoList.service';
 import { CreateTodoListInput, UpdateTodoListInput } from '../graphql';
 import { GqlAuthGuard } from '../auth/gql-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
+import { User } from 'generated/prisma/client';
 
 @Resolver('TodoList')
 export class TodoListsResolver {
@@ -11,7 +12,7 @@ export class TodoListsResolver {
 
   @Query('todoLists')
   @UseGuards(GqlAuthGuard)
-  async todoLists(@CurrentUser() user: any) {
+  async todoLists(@CurrentUser() user: User) {
     return this.todoListsService.findByUser(user.id);
   }
 
@@ -20,7 +21,7 @@ export class TodoListsResolver {
   async createTodoList(
     @Args('input')
     input: CreateTodoListInput,
-    @CurrentUser() user: any,
+    @CurrentUser() user: User,
   ) {
     return this.todoListsService.create(input, user.id);
   }

@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
-import { TodoListsModule } from './todo-lists/todo-lists.module';
+import { TodoListsModule } from './todoList/todoList.module';
 import { TodoModule } from './todo/todo.module';
 import { AuthModule } from './auth/auth.module';
 import { GraphQLError } from 'graphql/error';

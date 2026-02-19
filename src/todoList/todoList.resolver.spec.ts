@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TodoListsResolver } from './todo-lists.resolver';
+import { TodoListsResolver } from './todoList.resolver';
 
 describe('TodoListsResolver', () => {
   let resolver: TodoListsResolver;

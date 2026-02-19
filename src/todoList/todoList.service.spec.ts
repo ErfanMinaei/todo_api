@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TodoListsService } from './todo-lists.service';
+import { TodoListsService } from './todoList.service';
 
 describe('TodoListsService', () => {
   let service: TodoListsService;
