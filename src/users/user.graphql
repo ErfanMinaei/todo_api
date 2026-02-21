@@ -6,11 +6,8 @@ type User {
   todoLists: [TodoList!]
 }
 
-type Mutation {
-  createUser(input: CreateUserInput!): User!
-}
 
-input CreateUserInput {
+input RegisterUserInput {
   firstName: String!
   lastName: String
   username: String!

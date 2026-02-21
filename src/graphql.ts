@@ -1,3 +1,4 @@
+
 /*
  * -------------------------------------------------------
  * THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
@@ -10,14 +11,6 @@
 export class LoginInput {
     username: string;
     password: string;
-}
-
-export class UpdateTodoListInput {
-    title?: Nullable<string>;
-}
-
-export class CreateTodoListInput {
-    title: string;
 }
 
 export class CreateTodoInput {
@@ -34,7 +27,15 @@ export class UpdateTodoInput {
     deadline?: Nullable<DateTime>;
 }
 
-export class CreateUserInput {
+export class UpdateTodoListInput {
+    title?: Nullable<string>;
+}
+
+export class CreateTodoListInput {
+    title: string;
+}
+
+export class RegisterUserInput {
     firstName: string;
     lastName?: Nullable<string>;
     username: string;
@@ -49,11 +50,7 @@ export class AuthPayload {
 export abstract class IMutation {
     abstract login(input: LoginInput): AuthPayload | Promise<AuthPayload>;
 
-    abstract createTodoList(input: CreateTodoListInput): TodoList | Promise<TodoList>;
-
-    abstract updateTodoList(id: number, input: UpdateTodoListInput): TodoList | Promise<TodoList>;
-
-    abstract deleteTodoList(id: number): boolean | Promise<boolean>;
+    abstract register(input: RegisterUserInput): AuthPayload | Promise<AuthPayload>;
 
     abstract createTodo(input: CreateTodoInput): Todo | Promise<Todo>;
 
@@ -61,24 +58,11 @@ export abstract class IMutation {
 
     abstract deleteTodo(id: number): boolean | Promise<boolean>;
 
-    abstract createUser(input: CreateUserInput): User | Promise<User>;
-}
+    abstract createTodoList(input: CreateTodoListInput): TodoList | Promise<TodoList>;
 
-export class TodoList {
-    id: number;
-    title: string;
-    created_at: DateTime;
-    userId: number;
-    user: User;
-    todos: Todo[];
-}
+    abstract updateTodoList(id: number, input: UpdateTodoListInput): TodoList | Promise<TodoList>;
 
-export abstract class IQuery {
-    abstract todoLists(): TodoList[] | Promise<TodoList[]>;
-
-    abstract todos(todoListId: number): Todo[] | Promise<Todo[]>;
-
-    abstract todo(id: number): Nullable<Todo> | Promise<Nullable<Todo>>;
+    abstract deleteTodoList(id: number): boolean | Promise<boolean>;
 }
 
 export class Todo {
@@ -89,6 +73,23 @@ export class Todo {
     deadline: DateTime;
     todoListId: number;
     todoList: TodoList;
+}
+
+export abstract class IQuery {
+    abstract todos(todoListId: number): Todo[] | Promise<Todo[]>;
+
+    abstract todo(id: number): Nullable<Todo> | Promise<Nullable<Todo>>;
+
+    abstract todoLists(): TodoList[] | Promise<TodoList[]>;
+}
+
+export class TodoList {
+    id: number;
+    title: string;
+    created_at: DateTime;
+    userId: number;
+    user: User;
+    todos: Todo[];
 }
 
 export class User {

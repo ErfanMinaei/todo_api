@@ -1,7 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { compare } from 'bcrypt';
+import { compare, hash } from 'bcrypt';
+import { RegisterUserInput } from 'src/graphql';
+import { PrismaClientKnownRequestError } from 'generated/prisma/internal/prismaNamespace';
 
 @Injectable()
 export class AuthService {
@@ -38,5 +44,40 @@ export class AuthService {
         username: user.username,
       },
     };
+  }
+
+  async register(input: RegisterUserInput) {
+    const hashedPassword = await hash(input.password, 10);
+
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          ...input,
+          password: hashedPassword,
+        },
+      });
+
+      const token = this.jwtService.sign({
+        sub: user.id,
+        username: user.username,
+      });
+
+      return {
+        token,
+        user: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          username: user.username,
+        },
+      };
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ConflictException('Username already exists');
+        }
+      }
+      throw error;
+    }
   }
 }
