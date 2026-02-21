@@ -4,7 +4,7 @@ import { CreateTodoListInput, UpdateTodoListInput } from '../graphql';
 
 @Injectable()
 export class TodoListsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(readonly prisma: PrismaService) {}
 
   async findByUser(userId: number) {
     return this.prisma.userTodoList.findMany({
@@ -26,7 +26,7 @@ export class TodoListsService {
   async update(input: UpdateTodoListInput, id: number) {
     const updateData = Object.fromEntries(
       Object.entries(input).filter(
-        ([_, value]) => value !== null && value !== undefined,
+        ([, value]) => value !== null && value !== undefined,
       ),
     );
 
