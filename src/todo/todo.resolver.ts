@@ -3,7 +3,7 @@ import { UseGuards } from '@nestjs/common';
 import { TodoService } from './todo.service';
 import { CreateTodoInput, UpdateTodoInput } from '../graphql';
 
-import { GqlAuthGuard } from '../auth/gql-auth.guard';
+import { GqlAuthGuard } from '../auth/gqlAuth.guard';
 
 @Resolver('Todo')
 export class TodoResolver {
