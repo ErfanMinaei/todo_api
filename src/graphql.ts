@@ -23,7 +23,7 @@ export class CreateTodoInput {
 export class UpdateTodoInput {
     title?: Nullable<string>;
     description?: Nullable<string>;
-    is_done?: Nullable<boolean>;
+    isDone?: Nullable<boolean>;
     deadline?: Nullable<DateTime>;
 }
 
@@ -43,14 +43,24 @@ export class RegisterUserInput {
 }
 
 export class AuthPayload {
-    token: string;
+    accessToken: string;
+    refreshToken: string;
     user: User;
+}
+
+export class RefreshPayload {
+    accessToken: string;
+    refreshToken: string;
 }
 
 export abstract class IMutation {
     abstract login(input: LoginInput): AuthPayload | Promise<AuthPayload>;
 
     abstract register(input: RegisterUserInput): AuthPayload | Promise<AuthPayload>;
+
+    abstract refresh(refreshToken: string): RefreshPayload | Promise<RefreshPayload>;
+
+    abstract logout(): boolean | Promise<boolean>;
 
     abstract createTodo(input: CreateTodoInput): Todo | Promise<Todo>;
 
@@ -69,7 +79,7 @@ export class Todo {
     id: number;
     title: string;
     description: string;
-    is_done: boolean;
+    isDone: boolean;
     deadline: DateTime;
     todoListId: number;
     todoList: TodoList;
@@ -86,7 +96,7 @@ export abstract class IQuery {
 export class TodoList {
     id: number;
     title: string;
-    created_at: DateTime;
+    createdAt: DateTime;
     userId: number;
     user: User;
     todos: Todo[];

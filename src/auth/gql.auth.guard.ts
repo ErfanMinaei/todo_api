@@ -54,7 +54,8 @@ export class GqlAuthGuard implements CanActivate {
 
       req.user = user;
       return true;
-    } catch {
+    } catch (error) {
+      if (error instanceof UnauthorizedException) throw error;
       throw new UnauthorizedException();
     }
   }

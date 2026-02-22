@@ -1,11 +1,19 @@
 type AuthPayload {
-  token: String!
+  accessToken: String!
+  refreshToken: String!
   user: User!
+}
+
+type RefreshPayload {
+  accessToken: String!
+  refreshToken: String!
 }
 
 type Mutation {
   login(input: LoginInput!): AuthPayload!
   register(input: RegisterUserInput!): AuthPayload!
+  refresh(refreshToken: String!): RefreshPayload!
+  logout: Boolean!
 }
 
 input LoginInput {

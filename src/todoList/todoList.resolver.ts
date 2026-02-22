@@ -2,7 +2,7 @@ import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { TodoListsService } from './todoList.service';
 import { CreateTodoListInput, UpdateTodoListInput } from '../graphql';
-import { GqlAuthGuard } from '../auth/gqlAuth.guard';
+import { GqlAuthGuard } from '../auth/gql.auth.guard';
 import { CurrentUser } from '../auth/currentUser.decorator';
 import { User } from 'generated/prisma/client';
 
