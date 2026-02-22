@@ -2,7 +2,7 @@ type Todo {
   id: Int!
   title: String!
   description: String!
-  is_done: Boolean!
+  isDone: Boolean!
   deadline: DateTime!
   todoListId: Int!
   todoList: TodoList!
@@ -31,6 +31,6 @@ input CreateTodoInput {
 input UpdateTodoInput {
   title: String
   description: String
-  is_done: Boolean
+  isDone: Boolean
   deadline: DateTime
 }

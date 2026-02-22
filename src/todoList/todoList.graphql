@@ -1,7 +1,7 @@
 type TodoList {
   id: Int!
   title: String!
-  created_at: DateTime!
+  createdAt: DateTime!
   userId: Int!
   user: User!
   todos: [Todo!]!
