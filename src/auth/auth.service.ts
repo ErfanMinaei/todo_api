@@ -11,7 +11,7 @@ import { PrismaClientKnownRequestError } from 'generated/prisma/internal/prismaN
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 import { verify, JwtPayload } from 'jsonwebtoken';
-import { StringValue } from 'ms';
+import ms, { StringValue } from 'ms';
 
 interface TokenPayload {
   sub: number;
@@ -56,9 +56,11 @@ export class AuthService {
 
   private async saveRefreshToken(userId: number, token: string): Promise<void> {
     const tokenHash = this.hashToken(token);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
+    const expiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN');
+    if (!expiresIn) {
+      throw new Error('JWT_REFRESH_EXPIRES_IN is not defined');
+    }
+    const expiresAt = new Date(Date.now() + ms(expiresIn as StringValue));
     await this.prisma.refreshToken.create({
       data: { token, tokenHash, userId, expiresAt },
     });
