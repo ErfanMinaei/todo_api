@@ -21,20 +21,7 @@ model User {
   username  String  @unique
   password  String
 
-  todoLists     UserTodoList[]
-  refreshTokens RefreshToken[]
-}
-
-model RefreshToken {
-  id          Int      @id @default(autoincrement())
-  token       String   @db.Text
-  tokenHash   String   @unique 
-  userId      Int
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt   DateTime
-  createdAt   DateTime @default(now())
-
-  @@index([userId])
+  todoLists UserTodoList[]
 }
 
 model UserTodoList {

@@ -11,6 +11,7 @@ import { TodoListsModule } from './todoList/todoList.module';
 import { TodoModule } from './todo/todo.module';
 import { AuthModule } from './auth/auth.module';
 import { GraphQLError } from 'graphql/error';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { GraphQLError } from 'graphql/error';
     TodoListsModule,
     TodoModule,
     AuthModule,
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

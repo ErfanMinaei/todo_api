@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { RedisService } from 'src/redis/redis.service';
 import { compare, hash } from 'bcrypt';
 import { RegisterUserInput } from 'src/graphql';
 import { PrismaClientKnownRequestError } from 'generated/prisma/internal/prismaNamespace';
@@ -24,6 +25,7 @@ export class AuthService {
     readonly prisma: PrismaService,
     readonly jwtService: JwtService,
     readonly configService: ConfigService,
+    readonly redis: RedisService,
   ) {}
 
   private hashToken(token: string): string {
@@ -53,17 +55,37 @@ export class AuthService {
       },
     );
   }
+  private parseStringArray(value: string): string[] {
+    const parsed: unknown = JSON.parse(value);
+
+    if (
+      Array.isArray(parsed) &&
+      parsed.every((item) => typeof item === 'string')
+    ) {
+      return parsed;
+    }
+
+    return [];
+  }
 
   private async saveRefreshToken(userId: number, token: string): Promise<void> {
     const tokenHash = this.hashToken(token);
     const expiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN');
-    if (!expiresIn) {
-      throw new Error('JWT_REFRESH_EXPIRES_IN is not defined');
-    }
-    const expiresAt = new Date(Date.now() + ms(expiresIn as StringValue));
-    await this.prisma.refreshToken.create({
-      data: { token, tokenHash, userId, expiresAt },
-    });
+    if (!expiresIn) throw new Error('JWT_REFRESH_EXPIRES_IN is not defined');
+
+    const ttlSeconds = Math.floor(ms(expiresIn as StringValue) / 1000);
+
+    await this.redis.set(
+      `refresh_token:${tokenHash}`,
+      String(userId),
+      ttlSeconds,
+    );
+
+    const indexKey = `refresh_tokens_user:${userId}`;
+    const existing = await this.redis.get(indexKey);
+    const hashes = existing ? this.parseStringArray(existing) : [];
+    hashes.push(tokenHash);
+    await this.redis.set(indexKey, JSON.stringify(hashes), ttlSeconds);
   }
 
   private formatUser(user: {
@@ -94,16 +116,11 @@ export class AuthService {
     }
 
     const payload = decoded as JwtPayload & { username: string };
-
-    return {
-      sub: Number(payload.sub),
-      username: payload.username,
-    };
+    return { sub: Number(payload.sub), username: payload.username };
   }
 
   async login(username: string, password: string) {
     const user = await this.prisma.user.findUnique({ where: { username } });
-
     if (!user)
       throw new UnauthorizedException('Incorrect username or password');
 
@@ -113,7 +130,6 @@ export class AuthService {
 
     const accessToken = this.generateAccessToken(user.id, user.username);
     const refreshToken = this.generateRefreshToken(user.id, user.username);
-
     await this.saveRefreshToken(user.id, refreshToken);
 
     return { accessToken, refreshToken, user: this.formatUser(user) };
@@ -129,7 +145,6 @@ export class AuthService {
 
       const accessToken = this.generateAccessToken(user.id, user.username);
       const refreshToken = this.generateRefreshToken(user.id, user.username);
-
       await this.saveRefreshToken(user.id, refreshToken);
 
       return { accessToken, refreshToken, user: this.formatUser(user) };
@@ -153,15 +168,13 @@ export class AuthService {
     }
 
     const tokenHash = this.hashToken(refreshToken);
-    const stored = await this.prisma.refreshToken.findUnique({
-      where: { tokenHash },
-    });
+    const stored = await this.redis.get(`refresh_token:${tokenHash}`);
 
-    if (!stored || stored.expiresAt < new Date()) {
+    if (!stored) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    await this.prisma.refreshToken.delete({ where: { tokenHash } });
+    await this.redis.del(`refresh_token:${tokenHash}`);
 
     const newAccessToken = this.generateAccessToken(
       payload.sub,
@@ -171,14 +184,23 @@ export class AuthService {
       payload.sub,
       payload.username,
     );
-
     await this.saveRefreshToken(payload.sub, newRefreshToken);
 
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   }
 
   async logout(userId: number): Promise<boolean> {
-    await this.prisma.refreshToken.deleteMany({ where: { userId } });
+    const indexKey = `refresh_tokens_user:${userId}`;
+    const existing = await this.redis.get(indexKey);
+
+    if (existing) {
+      const hashes = this.parseStringArray(existing);
+      await Promise.all(
+        hashes.map((h) => this.redis.del(`refresh_token:${h}`)),
+      );
+      await this.redis.del(indexKey);
+    }
+
     return true;
   }
 }
