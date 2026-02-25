@@ -3,8 +3,6 @@ import { AuthService } from './auth.service';
 import { LoginInput, RegisterUserInput } from 'src/graphql';
 import { UseGuards } from '@nestjs/common';
 import { GqlAuthGuard } from './gql.auth.guard';
-import { CurrentUser } from './currentUser.decorator';
-import { User } from 'generated/prisma/client';
 
 @Resolver()
 export class AuthResolver {
@@ -27,7 +25,7 @@ export class AuthResolver {
 
   @UseGuards(GqlAuthGuard)
   @Mutation('logout')
-  async logout(@CurrentUser() user: User) {
-    return this.authService.logout(user.id);
+  async logout(@Args('refreshToken') refreshToken: string) {
+    return this.authService.logout(refreshToken);
   }
 }

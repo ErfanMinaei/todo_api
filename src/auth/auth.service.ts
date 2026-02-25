@@ -13,6 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 import { verify, JwtPayload } from 'jsonwebtoken';
 import ms, { StringValue } from 'ms';
+import { User, UserRole } from 'generated/prisma/client';
 
 interface TokenPayload {
   sub: number;
@@ -34,7 +35,7 @@ export class AuthService {
 
   private generateAccessToken(userId: number, username: string): string {
     return this.jwtService.sign(
-      { sub: userId, username },
+      { sub: userId, username, type: 'access' },
       {
         secret: this.configService.get<string>('JWT_SECRET'),
         expiresIn: this.configService.get<string>(
@@ -46,7 +47,7 @@ export class AuthService {
 
   private generateRefreshToken(userId: number, username: string): string {
     return this.jwtService.sign(
-      { sub: userId, username },
+      { sub: userId, username, type: 'refresh' },
       {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
         expiresIn: this.configService.get<string>(
@@ -54,18 +55,6 @@ export class AuthService {
         ) as StringValue,
       },
     );
-  }
-  private parseStringArray(value: string): string[] {
-    const parsed: unknown = JSON.parse(value);
-
-    if (
-      Array.isArray(parsed) &&
-      parsed.every((item) => typeof item === 'string')
-    ) {
-      return parsed;
-    }
-
-    return [];
   }
 
   private async saveRefreshToken(userId: number, token: string): Promise<void> {
@@ -80,25 +69,15 @@ export class AuthService {
       String(userId),
       ttlSeconds,
     );
-
-    const indexKey = `refresh_tokens_user:${userId}`;
-    const existing = await this.redis.get(indexKey);
-    const hashes = existing ? this.parseStringArray(existing) : [];
-    hashes.push(tokenHash);
-    await this.redis.set(indexKey, JSON.stringify(hashes), ttlSeconds);
   }
 
-  private formatUser(user: {
-    id: number;
-    firstName: string;
-    lastName: string | null;
-    username: string;
-  }) {
+  private formatUser(user: User & { userRoles?: UserRole[] }) {
     return {
       id: user.id,
       firstName: user.firstName,
       lastName: user.lastName ?? '',
       username: user.username,
+      roles: user.userRoles?.map((ur) => ur.role) || ['USER'],
     };
   }
 
@@ -110,12 +89,14 @@ export class AuthService {
       typeof decoded !== 'object' ||
       decoded === null ||
       !('sub' in decoded) ||
-      !('username' in decoded)
+      !('username' in decoded) ||
+      !('type' in decoded) ||
+      decoded.type !== 'refresh'
     ) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const payload = decoded as JwtPayload & { username: string };
+    const payload = decoded as JwtPayload & { username: string; type: string };
     return { sub: Number(payload.sub), username: payload.username };
   }
 
@@ -189,18 +170,9 @@ export class AuthService {
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   }
 
-  async logout(userId: number): Promise<boolean> {
-    const indexKey = `refresh_tokens_user:${userId}`;
-    const existing = await this.redis.get(indexKey);
-
-    if (existing) {
-      const hashes = this.parseStringArray(existing);
-      await Promise.all(
-        hashes.map((h) => this.redis.del(`refresh_token:${h}`)),
-      );
-      await this.redis.del(indexKey);
-    }
-
+  async logout(refreshToken: string): Promise<boolean> {
+    const tokenHash = this.hashToken(refreshToken);
+    await this.redis.del(`refresh_token:${tokenHash}`);
     return true;
   }
 }
