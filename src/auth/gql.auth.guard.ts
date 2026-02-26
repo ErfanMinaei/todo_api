@@ -1,13 +1,14 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { verify } from 'jsonwebtoken';
 import { Request } from 'express';
-import { User } from 'generated/prisma/client';
+import { Role, User, UserRole } from 'generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface GqlContext {
@@ -18,6 +19,10 @@ interface JwtPayload {
   sub: number;
   username: string;
 }
+
+type AuthUser = User & {
+  userRoles: UserRole[];
+};
 
 @Injectable()
 export class GqlAuthGuard implements CanActivate {
@@ -58,5 +63,28 @@ export class GqlAuthGuard implements CanActivate {
       if (error instanceof UnauthorizedException) throw error;
       throw new UnauthorizedException();
     }
+  }
+}
+
+@Injectable()
+export class RolesGuard implements CanActivate {
+  constructor(private readonly allowedRoles: Role[]) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const ctx = GqlExecutionContext.create(context);
+    const req = ctx.getContext<{ req: { user: AuthUser } }>().req;
+
+    if (!req.user) {
+      throw new ForbiddenException('User not found in request');
+    }
+
+    const userRoles: Role[] = req.user.userRoles.map((r) => r.role);
+    const hasRole = userRoles.some((role) => this.allowedRoles.includes(role));
+
+    if (!hasRole) {
+      throw new ForbiddenException('You are not authorized to do this.');
+    }
+
+    return true;
   }
 }

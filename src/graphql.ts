@@ -8,6 +8,12 @@
 /* tslint:disable */
 /* eslint-disable */
 
+export enum Role {
+    USER = "USER",
+    ADMIN = "ADMIN",
+    SUPERADMIN = "SUPERADMIN"
+}
+
 export class LoginInput {
     username: string;
     password: string;
@@ -73,6 +79,12 @@ export abstract class IMutation {
     abstract updateTodoList(id: number, input: UpdateTodoListInput): TodoList | Promise<TodoList>;
 
     abstract deleteTodoList(id: number): boolean | Promise<boolean>;
+
+    abstract createAdmin(input: RegisterUserInput): User | Promise<User>;
+
+    abstract promoteToAdmin(userId: number): User | Promise<User>;
+
+    abstract deleteUser(userId: number): boolean | Promise<boolean>;
 }
 
 export class Todo {
@@ -91,6 +103,10 @@ export abstract class IQuery {
     abstract todo(id: number): Nullable<Todo> | Promise<Nullable<Todo>>;
 
     abstract todoLists(): TodoList[] | Promise<TodoList[]>;
+
+    abstract allUsers(): User[] | Promise<User[]>;
+
+    abstract userTodoLists(userId: number): TodoList[] | Promise<TodoList[]>;
 }
 
 export class TodoList {
@@ -107,6 +123,7 @@ export class User {
     firstName: string;
     lastName?: Nullable<string>;
     username: string;
+    roles: Role[];
     todoLists?: Nullable<TodoList[]>;
 }
 

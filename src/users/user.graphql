@@ -1,8 +1,15 @@
+enum Role {
+  USER
+  ADMIN
+  SUPERADMIN
+}
+
 type User {
   id: Int!
   firstName: String!
   lastName: String
   username: String!
+  roles: [Role!]!
   todoLists: [TodoList!]
 }
 
@@ -12,4 +19,15 @@ input RegisterUserInput {
   lastName: String
   username: String!
   password: String!
+}
+
+type Query {
+  allUsers: [User!]!
+  userTodoLists(userId: Int!): [TodoList!]!
+}
+
+type Mutation {
+  createAdmin(input: RegisterUserInput!): User!
+  promoteToAdmin(userId: Int!): User!
+  deleteUser(userId: Int!): Boolean!
 }
