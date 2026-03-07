@@ -55,7 +55,9 @@ export class UsersService {
         data: {
           ...input,
           password: hashedPassword,
-          userRoles: { create: { role: 'ADMIN' } },
+          userRoles: {
+            create: [{ role: 'ADMIN' }, { role: 'USER' }],
+          },
         },
         include: { userRoles: true },
       });
