@@ -66,7 +66,7 @@ export abstract class IMutation {
 
     abstract refresh(refreshToken: string): RefreshPayload | Promise<RefreshPayload>;
 
-    abstract logout(): boolean | Promise<boolean>;
+    abstract logout(refreshToken: string): boolean | Promise<boolean>;
 
     abstract createTodo(input: CreateTodoInput): Todo | Promise<Todo>;
 

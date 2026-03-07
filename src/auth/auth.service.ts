@@ -7,7 +7,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RedisService } from 'src/redis/redis.service';
 import { compare, hash } from 'bcrypt';
-import { RegisterUserInput } from 'src/graphql';
+import { RegisterUserInput, Role } from 'src/graphql';
 import { PrismaClientKnownRequestError } from 'generated/prisma/internal/prismaNamespace';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
@@ -101,7 +101,10 @@ export class AuthService {
   }
 
   async login(username: string, password: string) {
-    const user = await this.prisma.user.findUnique({ where: { username } });
+    const user = await this.prisma.user.findUnique({
+      where: { username },
+      include: { userRoles: true },
+    });
     if (!user)
       throw new UnauthorizedException('Incorrect username or password');
 
@@ -121,7 +124,14 @@ export class AuthService {
 
     try {
       const user = await this.prisma.user.create({
-        data: { ...input, password: hashedPassword },
+        data: {
+          ...input,
+          password: hashedPassword,
+          userRoles: {
+            create: [{ role: Role.USER }],
+          },
+        },
+        include: { userRoles: true },
       });
 
       const accessToken = this.generateAccessToken(user.id, user.username);

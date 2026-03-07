@@ -20,7 +20,17 @@ export class TodoService {
     });
   }
 
-  async create(input: CreateTodoInput) {
+  async create(input: CreateTodoInput, userId: number) {
+    const todoList = await this.prisma.userTodoList.findFirst({
+      where: { id: input.todoListId, userId },
+    });
+
+    if (!todoList) {
+      throw new Error(
+        `TodoList with id ${input.todoListId} not found or does not belong to you`,
+      );
+    }
+
     return this.prisma.todo.create({
       data: input,
       include: { todoList: true },

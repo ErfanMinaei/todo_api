@@ -13,7 +13,7 @@ type Mutation {
   login(input: LoginInput!): AuthPayload!
   register(input: RegisterUserInput!): AuthPayload!
   refresh(refreshToken: String!): RefreshPayload!
-  logout: Boolean!
+  logout(refreshToken: String!): Boolean!
 }
 
 input LoginInput {

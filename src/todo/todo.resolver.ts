@@ -4,6 +4,8 @@ import { TodoService } from './todo.service';
 import { CreateTodoInput, UpdateTodoInput } from '../graphql';
 
 import { GqlAuthGuard } from '../auth/gql.auth.guard';
+import { CurrentUser } from 'src/auth/currentUser.decorator';
+import { User } from 'generated/prisma/client';
 
 @Resolver('Todo')
 export class TodoResolver {
@@ -24,10 +26,10 @@ export class TodoResolver {
   @Mutation('createTodo')
   @UseGuards(GqlAuthGuard)
   async createTodo(
-    @Args('input')
-    input: CreateTodoInput,
+    @Args('input') input: CreateTodoInput,
+    @CurrentUser() user: User,
   ) {
-    return this.todosService.create(input);
+    return this.todosService.create(input, user.id);
   }
 
   @Mutation('updateTodo')
