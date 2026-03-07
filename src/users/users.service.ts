@@ -1,7 +1,12 @@
 // users.service.ts
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { hash } from 'bcrypt';
+import { PrismaClientKnownRequestError } from 'generated/prisma/internal/prismaNamespace';
 
 @Injectable()
 export class UsersService {
@@ -44,14 +49,25 @@ export class UsersService {
     password: string;
   }) {
     const hashedPassword = await hash(input.password, 10);
-    const user = await this.prisma.user.create({
-      data: {
-        ...input,
-        password: hashedPassword,
-        userRoles: { create: { role: 'ADMIN' } },
-      },
-      include: { userRoles: true },
-    });
-    return user;
+
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          ...input,
+          password: hashedPassword,
+          userRoles: { create: { role: 'ADMIN' } },
+        },
+        include: { userRoles: true },
+      });
+      return {
+        ...user,
+        roles: user.userRoles.map((r) => r.role),
+      };
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new ConflictException('Username already exists');
+      }
+      throw e;
+    }
   }
 }
