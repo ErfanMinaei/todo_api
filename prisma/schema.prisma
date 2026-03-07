@@ -21,20 +21,19 @@ enum Role {
 }
 
 model User {
-  id        Int     @id @default(autoincrement())
+  id        Int            @id @default(autoincrement())
   firstName String
   lastName  String?
-  username  String  @unique
+  username  String         @unique
   password  String
-  
   userRoles UserRole[]
   todoLists UserTodoList[]
 }
 
 model UserRole {
-  id     Int @id @default(autoincrement())
+  id     Int  @id @default(autoincrement())
   userId Int
-  user   User @relation(fields: [userId], references: [id])
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   role   Role
 
   @@unique([userId, role])
