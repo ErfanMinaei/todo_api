@@ -53,6 +53,7 @@ export class GqlAuthGuard implements CanActivate {
 
       const user = await this.prisma.user.findUnique({
         where: { id: payload.sub },
+        include: { userRoles: true },
       });
 
       if (!user) throw new UnauthorizedException();
