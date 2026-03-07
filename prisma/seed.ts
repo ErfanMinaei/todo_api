@@ -15,7 +15,7 @@ async function seed() {
       username: 'superadmin',
       password: hashedPassword,
       userRoles: {
-        create: { role: 'SUPERADMIN' },
+        create: [{ role: 'SUPERADMIN' }, { role: 'ADMIN' }, { role: 'USER' }],
       },
     },
   });
