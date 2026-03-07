@@ -1,4 +1,3 @@
-// users.service.ts
 import {
   ConflictException,
   Injectable,
@@ -7,15 +6,27 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { hash } from 'bcrypt';
 import { PrismaClientKnownRequestError } from 'generated/prisma/internal/prismaNamespace';
+import { User, UserRole } from 'generated/prisma/client';
 
 @Injectable()
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private formatUser(user: User & { userRoles?: UserRole[] }) {
+    return {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName ?? '',
+      username: user.username,
+      roles: user.userRoles?.map((ur) => ur.role) || ['USER'],
+    };
+  }
+
   async getAllUsers() {
-    return this.prisma.user.findMany({
-      include: { userRoles: true, todoLists: true },
+    const users = await this.prisma.user.findMany({
+      include: { userRoles: true },
     });
+    return users.map((user) => this.formatUser(user));
   }
 
   async getUserById(userId: number) {
@@ -24,7 +35,10 @@ export class UsersService {
       include: { userRoles: true, todoLists: true },
     });
     if (!user) throw new NotFoundException('User not found');
-    return user;
+    return {
+      ...this.formatUser(user),
+      todoLists: user.todoLists,
+    };
   }
 
   async deleteUser(userId: number) {
@@ -33,13 +47,18 @@ export class UsersService {
   }
 
   async promoteToAdmin(userId: number) {
-    const user = await this.getUserById(userId);
-    const alreadyAdmin = user.userRoles.some((r) => r.role === 'ADMIN');
-    if (alreadyAdmin) return user;
-
-    return this.prisma.userRole.create({
-      data: { userId, role: 'ADMIN' },
+    await this.prisma.userRole.upsert({
+      where: { userId_role: { userId, role: 'ADMIN' } },
+      create: { userId, role: 'ADMIN' },
+      update: {},
     });
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { userRoles: true },
+    });
+    if (!user) throw new NotFoundException('User not found');
+    return this.formatUser(user);
   }
 
   async createAdmin(input: {
