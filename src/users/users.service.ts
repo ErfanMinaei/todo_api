@@ -22,10 +22,21 @@ export class UsersService {
     };
   }
 
-  async getAllUsers() {
+  async getAllUsers(callerRoles: string[]) {
+    const isSuperAdmin = callerRoles.includes('SUPERADMIN');
+
     const users = await this.prisma.user.findMany({
+      where: isSuperAdmin
+        ? undefined
+        : {
+            userRoles: {
+              every: { role: 'USER' },
+              none: { role: { in: ['ADMIN', 'SUPERADMIN'] } },
+            },
+          },
       include: { userRoles: true },
     });
+
     return users.map((user) => this.formatUser(user));
   }
 

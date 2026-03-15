@@ -2,6 +2,8 @@ import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { UsersService } from './users.service';
 import { UseGuards } from '@nestjs/common';
 import { GqlAuthGuard, RolesGuard } from '../auth/gql.auth.guard';
+import { User, UserRole } from 'generated/prisma/client';
+import { CurrentUser } from 'src/auth/currentUser.decorator';
 
 @Resolver('User')
 export class UsersResolver {
@@ -29,8 +31,11 @@ export class UsersResolver {
 
   @UseGuards(GqlAuthGuard, new RolesGuard(['ADMIN', 'SUPERADMIN']))
   @Query('allUsers')
-  async allUsers() {
-    return this.usersService.getAllUsers();
+  async allUsers(
+    @CurrentUser() currentUser: User & { userRoles?: UserRole[] },
+  ) {
+    const callerRoles = currentUser.userRoles?.map((ur) => ur.role) ?? [];
+    return this.usersService.getAllUsers(callerRoles);
   }
 
   @UseGuards(GqlAuthGuard, new RolesGuard(['ADMIN', 'SUPERADMIN']))
