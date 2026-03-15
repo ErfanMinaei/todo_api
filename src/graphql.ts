@@ -104,9 +104,9 @@ export abstract class IQuery {
 
     abstract todoLists(): TodoList[] | Promise<TodoList[]>;
 
-    abstract allUsers(): User[] | Promise<User[]>;
-
     abstract userTodoLists(userId: number): TodoList[] | Promise<TodoList[]>;
+
+    abstract allUsers(): User[] | Promise<User[]>;
 }
 
 export class TodoList {

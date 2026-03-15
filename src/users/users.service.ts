@@ -29,18 +29,6 @@ export class UsersService {
     return users.map((user) => this.formatUser(user));
   }
 
-  async getUserById(userId: number) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { userRoles: true, todoLists: true },
-    });
-    if (!user) throw new NotFoundException('User not found');
-    return {
-      ...this.formatUser(user),
-      todoLists: user.todoLists,
-    };
-  }
-
   async deleteUser(userId: number) {
     await this.prisma.user.delete({ where: { id: userId } });
     return true;

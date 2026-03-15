@@ -38,11 +38,4 @@ export class UsersResolver {
   async deleteUser(@Args('userId') userId: number) {
     return this.usersService.deleteUser(userId);
   }
-
-  @UseGuards(GqlAuthGuard, new RolesGuard(['ADMIN', 'SUPERADMIN']))
-  @Query('userTodoLists')
-  async userTodoLists(@Args('userId') userId: number) {
-    const user = await this.usersService.getUserById(userId);
-    return user.todoLists;
-  }
 }

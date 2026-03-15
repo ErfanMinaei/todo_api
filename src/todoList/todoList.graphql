@@ -11,6 +11,7 @@ scalar DateTime
 
 type Query {
   todoLists: [TodoList!]!
+  userTodoLists(userId: Int!): [TodoList!]!
 }
 
 type Mutation {

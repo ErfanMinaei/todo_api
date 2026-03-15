@@ -23,7 +23,6 @@ input RegisterUserInput {
 
 type Query {
   allUsers: [User!]!
-  userTodoLists(userId: Int!): [TodoList!]!
 }
 
 type Mutation {

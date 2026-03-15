@@ -2,7 +2,7 @@ import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { TodoListsService } from './todoList.service';
 import { CreateTodoListInput, UpdateTodoListInput } from '../graphql';
-import { GqlAuthGuard } from '../auth/gql.auth.guard';
+import { GqlAuthGuard, RolesGuard } from '../auth/gql.auth.guard';
 import { CurrentUser } from '../auth/currentUser.decorator';
 import { User } from 'generated/prisma/client';
 
@@ -40,5 +40,12 @@ export class TodoListsResolver {
   @UseGuards(GqlAuthGuard)
   async deleteTodo(@Args('id') id: number) {
     return this.todoListsService.delete(id);
+  }
+
+  @UseGuards(GqlAuthGuard, new RolesGuard(['ADMIN', 'SUPERADMIN']))
+  @Query('userTodoLists')
+  async userTodoLists(@Args('userId') userId: number) {
+    const todoLists = await this.todoListsService.findByUser(userId);
+    return todoLists;
   }
 }
