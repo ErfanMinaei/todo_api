@@ -43,4 +43,43 @@ export class UsersResolver {
   async deleteUser(@Args('userId') userId: number) {
     return this.usersService.deleteUser(userId);
   }
+
+  @UseGuards(GqlAuthGuard, new RolesGuard(['ADMIN', 'SUPERADMIN']))
+  @Mutation('updateUser')
+  async updateUser(
+    @CurrentUser() currentUser: User & { userRoles?: UserRole[] },
+    @Args('userId') userId: number,
+    @Args('input')
+    input: {
+      firstName?: string;
+      lastName?: string;
+      username?: string;
+      newPassword?: string;
+    },
+  ) {
+    const callerRoles = currentUser.userRoles?.map((ur) => ur.role) ?? [];
+    return this.usersService.updateUser(callerRoles, userId, input);
+  }
+
+  @UseGuards(GqlAuthGuard)
+  @Mutation('deleteSelf')
+  async deleteSelf(@CurrentUser() currentUser: User) {
+    return this.usersService.deleteSelf(currentUser.id);
+  }
+
+  @UseGuards(GqlAuthGuard)
+  @Mutation('updateSelf')
+  async updateSelf(
+    @CurrentUser() currentUser: User,
+    @Args('input')
+    input: {
+      firstName?: string;
+      lastName?: string;
+      username?: string;
+      currentPassword?: string;
+      newPassword?: string;
+    },
+  ) {
+    return this.usersService.updateSelf(currentUser.id, input);
+  }
 }

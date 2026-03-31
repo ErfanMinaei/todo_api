@@ -1,10 +1,12 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { hash } from 'bcrypt';
+import { hash, compare } from 'bcrypt';
 import { PrismaClientKnownRequestError } from 'generated/prisma/internal/prismaNamespace';
 import { User, UserRole } from 'generated/prisma/client';
 
@@ -43,6 +45,123 @@ export class UsersService {
   async deleteUser(userId: number) {
     await this.prisma.user.delete({ where: { id: userId } });
     return true;
+  }
+
+  async updateUser(
+    callerRoles: string[],
+    targetUserId: number,
+    input: {
+      firstName?: string;
+      lastName?: string;
+      username?: string;
+      newPassword?: string;
+    },
+  ) {
+    const isSuperAdmin = callerRoles.includes('SUPERADMIN');
+    const isAdmin = callerRoles.includes('ADMIN');
+
+    const targetUser = await this.prisma.user.findUnique({
+      where: { id: targetUserId },
+      include: { userRoles: true },
+    });
+    if (!targetUser) throw new NotFoundException('User not found');
+
+    const targetRoles = new Set(targetUser.userRoles.map((ur) => ur.role));
+    const targetIsAdmin = targetRoles.has('ADMIN');
+
+    if (isAdmin && !isSuperAdmin && targetIsAdmin) {
+      throw new ForbiddenException('Admins can only edit regular users');
+    }
+
+    const updateData: Partial<User> = {};
+    if (input.firstName !== undefined) updateData.firstName = input.firstName;
+    if (input.lastName !== undefined) updateData.lastName = input.lastName;
+    if (input.username !== undefined) updateData.username = input.username;
+    if (input.newPassword)
+      updateData.password = await hash(input.newPassword, 10);
+
+    try {
+      const updated = await this.prisma.user.update({
+        where: { id: targetUserId },
+        data: updateData,
+        include: { userRoles: true },
+      });
+      console.log('updated user:', JSON.stringify(updated)); // add this
+      return this.formatUser(updated);
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new ConflictException('Username already exists');
+      }
+      throw e;
+    }
+  }
+
+  async deleteSelf(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { userRoles: true },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    const isSuperAdmin = user.userRoles.some((ur) => ur.role === 'SUPERADMIN');
+    if (isSuperAdmin) {
+      throw new ForbiddenException(
+        'SuperAdmin cannot delete their own account',
+      );
+    }
+
+    await this.prisma.user.delete({ where: { id: userId } });
+    return true;
+  }
+
+  async updateSelf(
+    userId: number,
+    input: {
+      firstName?: string;
+      lastName?: string;
+      username?: string;
+      currentPassword?: string;
+      newPassword?: string;
+    },
+  ) {
+    if (input.newPassword) {
+      if (!input.currentPassword) {
+        throw new UnauthorizedException(
+          'Current password is required to set a new password',
+        );
+      }
+
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (!user) throw new NotFoundException('User not found');
+
+      const isMatch = await compare(input.currentPassword, user.password);
+      if (!isMatch) {
+        throw new UnauthorizedException('Current password is incorrect');
+      }
+    }
+
+    const updateData: Partial<User> = {};
+    if (input.firstName !== undefined) updateData.firstName = input.firstName;
+    if (input.lastName !== undefined) updateData.lastName = input.lastName;
+    if (input.username !== undefined) updateData.username = input.username;
+    if (input.newPassword) {
+      updateData.password = await hash(input.newPassword, 10);
+    }
+
+    try {
+      const updated = await this.prisma.user.update({
+        where: { id: userId },
+        data: updateData,
+        include: { userRoles: true },
+      });
+      return this.formatUser(updated);
+    } catch (e) {
+      if (e instanceof PrismaClientKnownRequestError && e.code === 'P2002') {
+        throw new ConflictException('Username already exists');
+      }
+      throw e;
+    }
   }
 
   async promoteToAdmin(userId: number) {

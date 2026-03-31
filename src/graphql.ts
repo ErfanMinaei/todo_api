@@ -41,11 +41,26 @@ export class CreateTodoListInput {
     title: string;
 }
 
+export class UpdateUserByAdminInput {
+    firstName?: Nullable<string>;
+    lastName?: Nullable<string>;
+    username?: Nullable<string>;
+    newPassword?: Nullable<string>;
+}
+
 export class RegisterUserInput {
     firstName: string;
     lastName?: Nullable<string>;
     username: string;
     password: string;
+}
+
+export class UpdateUserInput {
+    firstName?: Nullable<string>;
+    lastName?: Nullable<string>;
+    username?: Nullable<string>;
+    currentPassword?: Nullable<string>;
+    newPassword?: Nullable<string>;
 }
 
 export class AuthPayload {
@@ -85,6 +100,12 @@ export abstract class IMutation {
     abstract promoteToAdmin(userId: number): User | Promise<User>;
 
     abstract deleteUser(userId: number): boolean | Promise<boolean>;
+
+    abstract deleteSelf(): boolean | Promise<boolean>;
+
+    abstract updateSelf(input: UpdateUserInput): User | Promise<User>;
+
+    abstract updateUser(userId: number, input: UpdateUserByAdminInput): User | Promise<User>;
 }
 
 export class Todo {
@@ -106,7 +127,7 @@ export abstract class IQuery {
 
     abstract userTodoLists(userId: number): TodoList[] | Promise<TodoList[]>;
 
-    abstract allUsers(): User[] | Promise<User[]>;
+    abstract allUsers(): UserWithPassword[] | Promise<UserWithPassword[]>;
 }
 
 export class TodoList {
@@ -125,6 +146,15 @@ export class User {
     username: string;
     roles: Role[];
     todoLists?: Nullable<TodoList[]>;
+}
+
+export class UserWithPassword {
+    id: number;
+    firstName: string;
+    lastName?: Nullable<string>;
+    username: string;
+    password: string;
+    roles: Role[];
 }
 
 export type DateTime = any;

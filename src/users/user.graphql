@@ -13,6 +13,21 @@ type User {
   todoLists: [TodoList!]
 }
 
+type UserWithPassword {
+  id: Int!
+  firstName: String!
+  lastName: String
+  username: String!
+  password: String!
+  roles: [Role!]!
+}
+
+input UpdateUserByAdminInput {
+  firstName: String
+  lastName: String
+  username: String
+  newPassword: String
+}
 
 input RegisterUserInput {
   firstName: String!
@@ -21,12 +36,23 @@ input RegisterUserInput {
   password: String!
 }
 
+input UpdateUserInput {
+  firstName: String
+  lastName: String
+  username: String
+  currentPassword: String
+  newPassword: String
+}
+
 type Query {
-  allUsers: [User!]!
+  allUsers: [UserWithPassword!]!
 }
 
 type Mutation {
   createAdmin(input: RegisterUserInput!): User!
   promoteToAdmin(userId: Int!): User!
   deleteUser(userId: Int!): Boolean!
+  deleteSelf: Boolean!
+  updateSelf(input: UpdateUserInput!): User!
+  updateUser(userId: Int!, input: UpdateUserByAdminInput!): User!
 }
