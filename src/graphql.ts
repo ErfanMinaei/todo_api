@@ -106,6 +106,8 @@ export abstract class IMutation {
     abstract updateSelf(input: UpdateUserInput): User | Promise<User>;
 
     abstract updateUser(userId: number, input: UpdateUserByAdminInput): User | Promise<User>;
+
+    abstract demoteFromAdmin(userId: number): User | Promise<User>;
 }
 
 export class Todo {

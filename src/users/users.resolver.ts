@@ -29,6 +29,12 @@ export class UsersResolver {
     return this.usersService.promoteToAdmin(userId);
   }
 
+  @UseGuards(GqlAuthGuard, new RolesGuard(['SUPERADMIN']))
+  @Mutation('demoteFromAdmin')
+  async demoteFromAdmin(@Args('userId') userId: number) {
+    return this.usersService.demoteFromAdmin(userId);
+  }
+
   @UseGuards(GqlAuthGuard, new RolesGuard(['ADMIN', 'SUPERADMIN']))
   @Query('allUsers')
   async allUsers(

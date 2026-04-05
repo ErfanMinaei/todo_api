@@ -55,4 +55,5 @@ type Mutation {
   deleteSelf: Boolean!
   updateSelf(input: UpdateUserInput!): User!
   updateUser(userId: Int!, input: UpdateUserByAdminInput!): User!
+  demoteFromAdmin(userId: Int!): User!
 }

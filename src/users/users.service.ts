@@ -164,6 +164,37 @@ export class UsersService {
     }
   }
 
+  async demoteFromAdmin(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { userRoles: true },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    const hasAdminRole = user.userRoles.some((r) => r.role === 'ADMIN');
+
+    if (!hasAdminRole) {
+      throw new ConflictException('User is not an admin');
+    }
+
+    await this.prisma.userRole.delete({
+      where: {
+        userId_role: {
+          userId,
+          role: 'ADMIN',
+        },
+      },
+    });
+
+    const updated = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { userRoles: true },
+    });
+
+    return this.formatUser(updated!);
+  }
+
   async promoteToAdmin(userId: number) {
     await this.prisma.userRole.upsert({
       where: { userId_role: { userId, role: 'ADMIN' } },
