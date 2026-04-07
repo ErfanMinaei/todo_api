@@ -95,6 +95,12 @@ export abstract class IMutation {
 
     abstract deleteTodoList(id: number): boolean | Promise<boolean>;
 
+    abstract adminCreateTodoList(userId: number, input: CreateTodoListInput): TodoList | Promise<TodoList>;
+
+    abstract adminUpdateTodoList(todoListId: number, input: UpdateTodoListInput): TodoList | Promise<TodoList>;
+
+    abstract adminDeleteTodoList(todoListId: number): boolean | Promise<boolean>;
+
     abstract createAdmin(input: RegisterUserInput): User | Promise<User>;
 
     abstract promoteToAdmin(userId: number): User | Promise<User>;

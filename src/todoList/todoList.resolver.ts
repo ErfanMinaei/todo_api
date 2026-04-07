@@ -4,7 +4,7 @@ import { TodoListsService } from './todoList.service';
 import { CreateTodoListInput, UpdateTodoListInput } from '../graphql';
 import { GqlAuthGuard, RolesGuard } from '../auth/gql.auth.guard';
 import { CurrentUser } from '../auth/currentUser.decorator';
-import { User } from 'generated/prisma/client';
+import { User, UserRole } from 'generated/prisma/client';
 
 @Resolver('TodoList')
 export class TodoListsResolver {
@@ -44,8 +44,51 @@ export class TodoListsResolver {
 
   @UseGuards(GqlAuthGuard, new RolesGuard(['ADMIN', 'SUPERADMIN']))
   @Query('userTodoLists')
-  async userTodoLists(@Args('userId') userId: number) {
-    const todoLists = await this.todoListsService.findByUser(userId);
-    return todoLists;
+  async userTodoLists(
+    @CurrentUser() currentUser: User & { userRoles?: UserRole[] },
+    @Args('userId') userId: number,
+  ) {
+    const callerRoles = currentUser.userRoles?.map((ur) => ur.role) ?? [];
+    return this.todoListsService.adminGetUserTodoLists(callerRoles, userId);
+  }
+
+  @UseGuards(GqlAuthGuard, new RolesGuard(['SUPERADMIN']))
+  @Mutation('adminCreateTodoList')
+  async adminCreateTodoList(
+    @CurrentUser() currentUser: User & { userRoles?: UserRole[] },
+    @Args('userId') userId: number,
+    @Args('input') input: CreateTodoListInput,
+  ) {
+    const callerRoles = currentUser.userRoles?.map((ur) => ur.role) ?? [];
+    return this.todoListsService.adminCreateTodoList(
+      callerRoles,
+      userId,
+      input,
+    );
+  }
+
+  @UseGuards(GqlAuthGuard, new RolesGuard(['ADMIN', 'SUPERADMIN']))
+  @Mutation('adminUpdateTodoList')
+  async adminUpdateTodoList(
+    @CurrentUser() currentUser: User & { userRoles?: UserRole[] },
+    @Args('todoListId') todoListId: number,
+    @Args('input') input: UpdateTodoListInput,
+  ) {
+    const callerRoles = currentUser.userRoles?.map((ur) => ur.role) ?? [];
+    return this.todoListsService.adminUpdateTodoList(
+      callerRoles,
+      todoListId,
+      input,
+    );
+  }
+
+  @UseGuards(GqlAuthGuard, new RolesGuard(['ADMIN', 'SUPERADMIN']))
+  @Mutation('adminDeleteTodoList')
+  async adminDeleteTodoList(
+    @CurrentUser() currentUser: User & { userRoles?: UserRole[] },
+    @Args('todoListId') todoListId: number,
+  ) {
+    const callerRoles = currentUser.userRoles?.map((ur) => ur.role) ?? [];
+    return this.todoListsService.adminDeleteTodoList(callerRoles, todoListId);
   }
 }

@@ -3,9 +3,9 @@ import { UseGuards } from '@nestjs/common';
 import { TodoService } from './todo.service';
 import { CreateTodoInput, UpdateTodoInput } from '../graphql';
 
-import { GqlAuthGuard } from '../auth/gql.auth.guard';
+import { GqlAuthGuard, RolesGuard } from '../auth/gql.auth.guard';
 import { CurrentUser } from 'src/auth/currentUser.decorator';
-import { User } from 'generated/prisma/client';
+import { User, UserRole } from 'generated/prisma/client';
 
 @Resolver('Todo')
 export class TodoResolver {
@@ -46,5 +46,52 @@ export class TodoResolver {
   @UseGuards(GqlAuthGuard)
   async deleteTodo(@Args('id') id: number) {
     return this.todosService.delete(id);
+  }
+
+  // ---------- ADMIN ----------
+
+  @UseGuards(GqlAuthGuard, new RolesGuard(['ADMIN', 'SUPERADMIN']))
+  @Query('adminTodos')
+  async adminTodos(
+    @CurrentUser() currentUser: User & { userRoles?: UserRole[] },
+    @Args('todoListId') todoListId: number,
+  ) {
+    const callerRoles = currentUser.userRoles?.map((r) => r.role) ?? [];
+
+    return this.todosService.adminTodos(callerRoles, todoListId);
+  }
+
+  @UseGuards(GqlAuthGuard, new RolesGuard(['SUPERADMIN']))
+  @Mutation('adminCreateTodo')
+  async adminCreateTodo(
+    @CurrentUser() currentUser: User & { userRoles?: UserRole[] },
+    @Args('input') input: CreateTodoInput,
+  ) {
+    const callerRoles = currentUser.userRoles?.map((r) => r.role) ?? [];
+
+    return this.todosService.adminCreateTodo(callerRoles, input);
+  }
+
+  @UseGuards(GqlAuthGuard, new RolesGuard(['ADMIN', 'SUPERADMIN']))
+  @Mutation('adminUpdateTodo')
+  async adminUpdateTodo(
+    @CurrentUser() currentUser: User & { userRoles?: UserRole[] },
+    @Args('id') id: number,
+    @Args('input') input: UpdateTodoInput,
+  ) {
+    const callerRoles = currentUser.userRoles?.map((r) => r.role) ?? [];
+
+    return this.todosService.adminUpdateTodo(callerRoles, id, input);
+  }
+
+  @UseGuards(GqlAuthGuard, new RolesGuard(['ADMIN', 'SUPERADMIN']))
+  @Mutation('adminDeleteTodo')
+  async adminDeleteTodo(
+    @CurrentUser() currentUser: User & { userRoles?: UserRole[] },
+    @Args('id') id: number,
+  ) {
+    const callerRoles = currentUser.userRoles?.map((r) => r.role) ?? [];
+
+    return this.todosService.adminDeleteTodo(callerRoles, id);
   }
 }

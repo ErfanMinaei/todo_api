@@ -13,12 +13,16 @@ scalar DateTime
 type Query {
   todos(todoListId: Int!): [Todo!]!
   todo(id: Int!): Todo
+  adminTodos(todoListId: Int!): [Todo!]!
 }
 
 type Mutation {
   createTodo(input: CreateTodoInput!): Todo!
   updateTodo(id: Int!, input: UpdateTodoInput!): Todo!
   deleteTodo(id: Int!): Boolean!
+  adminCreateTodo(input: CreateTodoInput!): Todo!
+  adminUpdateTodo(id: Int!, input: UpdateTodoInput!): Todo!
+  adminDeleteTodo(id: Int!): Boolean!
 }
 
 input CreateTodoInput {

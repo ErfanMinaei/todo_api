@@ -16,12 +16,15 @@ type Query {
 
 type Mutation {
   createTodoList(input: CreateTodoListInput!): TodoList!
-  updateTodoList(id: Int!,input: UpdateTodoListInput!): TodoList!
+  updateTodoList(id: Int!, input: UpdateTodoListInput!): TodoList!
   deleteTodoList(id: Int!): Boolean!
+  adminCreateTodoList(userId: Int!, input: CreateTodoListInput!): TodoList!
+  adminUpdateTodoList(todoListId: Int!, input: UpdateTodoListInput!): TodoList!
+  adminDeleteTodoList(todoListId: Int!): Boolean!
 }
 
 input UpdateTodoListInput {
-  title : String
+  title: String
 }
 
 input CreateTodoListInput {
