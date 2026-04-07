@@ -89,6 +89,12 @@ export abstract class IMutation {
 
     abstract deleteTodo(id: number): boolean | Promise<boolean>;
 
+    abstract adminCreateTodo(input: CreateTodoInput): Todo | Promise<Todo>;
+
+    abstract adminUpdateTodo(id: number, input: UpdateTodoInput): Todo | Promise<Todo>;
+
+    abstract adminDeleteTodo(id: number): boolean | Promise<boolean>;
+
     abstract createTodoList(input: CreateTodoListInput): TodoList | Promise<TodoList>;
 
     abstract updateTodoList(id: number, input: UpdateTodoListInput): TodoList | Promise<TodoList>;
@@ -130,6 +136,8 @@ export abstract class IQuery {
     abstract todos(todoListId: number): Todo[] | Promise<Todo[]>;
 
     abstract todo(id: number): Nullable<Todo> | Promise<Nullable<Todo>>;
+
+    abstract adminTodos(todoListId: number): Todo[] | Promise<Todo[]>;
 
     abstract todoLists(): TodoList[] | Promise<TodoList[]>;
 
