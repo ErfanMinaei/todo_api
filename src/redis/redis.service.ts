@@ -4,7 +4,7 @@ import { createClient, RedisClientType } from 'redis';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
-  private client: RedisClientType;
+  private client!: RedisClientType;
 
   constructor(private readonly configService: ConfigService) {}
 
@@ -33,5 +33,25 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   async del(key: string): Promise<void> {
     await this.client.del(key);
+  }
+
+  async lrange(key: string, start: number, stop: number): Promise<string[]> {
+    return this.client.lRange(key, start, stop);
+  }
+
+  async lrem(key: string, count: number, value: string): Promise<number> {
+    return this.client.lRem(key, count, value);
+  }
+
+  async rpush(key: string, ...values: string[]): Promise<number> {
+    return this.client.rPush(key, values);
+  }
+
+  async mget(...keys: string[]): Promise<(string | null)[]> {
+    return this.client.mGet(keys);
+  }
+
+  async expire(key: string, ttlSeconds: number): Promise<number> {
+    return this.client.expire(key, ttlSeconds);
   }
 }

@@ -63,12 +63,16 @@ export class AuthService {
     if (!expiresIn) throw new Error('JWT_REFRESH_EXPIRES_IN is not defined');
 
     const ttlSeconds = Math.floor(ms(expiresIn as StringValue) / 1000);
+    const userKey = `user_tokens:${userId}`;
 
     await this.redis.set(
       `refresh_token:${tokenHash}`,
       String(userId),
       ttlSeconds,
     );
+
+    await this.redis.rpush(userKey, tokenHash);
+    await this.redis.expire(userKey, ttlSeconds);
   }
 
   private formatUser(user: User & { userRoles?: UserRole[] }) {
@@ -100,11 +104,42 @@ export class AuthService {
     return { sub: Number(payload.sub), username: payload.username };
   }
 
+  private get maxDevices(): number {
+    return Number(this.configService.get<string>('MAX_DEVICES') || 3);
+  }
+
+  private async checkDeviceLimit(userId: number): Promise<void> {
+    const userKey = `user_tokens:${userId}`;
+    const tokens = await this.redis.lrange(userKey, 0, -1);
+
+    if (tokens.length === 0) return;
+
+    const keys = tokens.map((t: string) => `refresh_token:${t}`);
+    const results = await this.redis.mget(...keys);
+
+    let validTokenCount = 0;
+
+    for (let i = 0; i < tokens.length; i++) {
+      if (results[i]) {
+        validTokenCount++;
+      } else {
+        await this.redis.lrem(userKey, 0, tokens[i]);
+      }
+    }
+
+    if (validTokenCount >= this.maxDevices) {
+      throw new UnauthorizedException(
+        'Maximum number of devices (3) reached. Please logout from another device first.',
+      );
+    }
+  }
+
   async login(username: string, password: string) {
     const user = await this.prisma.user.findUnique({
       where: { username },
       include: { userRoles: true },
     });
+
     if (!user)
       throw new UnauthorizedException('Incorrect username or password');
 
@@ -112,8 +147,11 @@ export class AuthService {
     if (!isPasswordValid)
       throw new UnauthorizedException('Incorrect username or password');
 
+    await this.checkDeviceLimit(user.id);
+
     const accessToken = this.generateAccessToken(user.id, user.username);
     const refreshToken = this.generateRefreshToken(user.id, user.username);
+
     await this.saveRefreshToken(user.id, refreshToken);
 
     return { accessToken, refreshToken, user: this.formatUser(user) };
@@ -152,6 +190,7 @@ export class AuthService {
 
   async refresh(refreshToken: string) {
     let payload: TokenPayload;
+
     try {
       payload = this.decodeRefreshToken(refreshToken);
     } catch {
@@ -165,16 +204,21 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
+    const userKey = `user_tokens:${payload.sub}`;
+
     await this.redis.del(`refresh_token:${tokenHash}`);
+    await this.redis.lrem(userKey, 0, tokenHash);
 
     const newAccessToken = this.generateAccessToken(
       payload.sub,
       payload.username,
     );
+
     const newRefreshToken = this.generateRefreshToken(
       payload.sub,
       payload.username,
     );
+
     await this.saveRefreshToken(payload.sub, newRefreshToken);
 
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
@@ -182,6 +226,14 @@ export class AuthService {
 
   async logout(refreshToken: string): Promise<boolean> {
     const tokenHash = this.hashToken(refreshToken);
+
+    const userId = await this.redis.get(`refresh_token:${tokenHash}`);
+
+    if (userId) {
+      const userKey = `user_tokens:${userId}`;
+      await this.redis.lrem(userKey, 0, tokenHash);
+    }
+
     await this.redis.del(`refresh_token:${tokenHash}`);
     return true;
   }
