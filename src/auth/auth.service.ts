@@ -129,7 +129,7 @@ export class AuthService {
 
     if (validTokenCount >= this.maxDevices) {
       throw new UnauthorizedException(
-        'Maximum number of devices (3) reached. Please logout from another device first.',
+        `Maximum number of devices (${this.maxDevices}) reached. Please logout from another device first.`,
       );
     }
   }
