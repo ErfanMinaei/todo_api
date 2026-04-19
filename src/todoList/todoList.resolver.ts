@@ -4,7 +4,7 @@ import { TodoListsService } from './todoList.service';
 import { CreateTodoListInput, UpdateTodoListInput } from '../graphql';
 import { GqlAuthGuard, RolesGuard } from '../auth/gql.auth.guard';
 import { CurrentUser } from '../auth/currentUser.decorator';
-import { User, UserRole } from 'generated/prisma/client';
+import type { User, UserRole } from '../../generated/prisma/client';
 
 @Resolver('TodoList')
 export class TodoListsResolver {

@@ -4,16 +4,16 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { RedisService } from 'src/redis/redis.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { RedisService } from '../redis/redis.service';
 import { compare, hash } from 'bcrypt';
-import { RegisterUserInput, Role } from 'src/graphql';
-import { PrismaClientKnownRequestError } from 'generated/prisma/internal/prismaNamespace';
+import { RegisterUserInput, Role } from '../graphql';
+import { PrismaClientKnownRequestError } from '../../generated/prisma/internal/prismaNamespace';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
 import { verify, JwtPayload } from 'jsonwebtoken';
 import ms, { StringValue } from 'ms';
-import { User, UserRole } from 'generated/prisma/client';
+import { User, UserRole } from '../../generated/prisma/client';
 
 interface TokenPayload {
   sub: number;

@@ -2,8 +2,8 @@ import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { UsersService } from './users.service';
 import { UseGuards } from '@nestjs/common';
 import { GqlAuthGuard, RolesGuard } from '../auth/gql.auth.guard';
-import { User, UserRole } from 'generated/prisma/client';
-import { CurrentUser } from 'src/auth/currentUser.decorator';
+import type { User, UserRole } from '../../generated/prisma/client';
+import { CurrentUser } from '../auth/currentUser.decorator';
 
 @Resolver('User')
 export class UsersResolver {

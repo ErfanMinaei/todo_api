@@ -7,8 +7,8 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { hash, compare } from 'bcrypt';
-import { PrismaClientKnownRequestError } from 'generated/prisma/internal/prismaNamespace';
-import { User, UserRole } from 'generated/prisma/client';
+import { PrismaClientKnownRequestError } from '../../generated/prisma/internal/prismaNamespace';
+import type { User, UserRole } from '../../generated/prisma/client';
 
 @Injectable()
 export class UsersService {

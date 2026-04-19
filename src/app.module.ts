@@ -10,8 +10,8 @@ import { UsersModule } from './users/users.module';
 import { TodoListsModule } from './todoList/todoList.module';
 import { TodoModule } from './todo/todo.module';
 import { AuthModule } from './auth/auth.module';
-import { GraphQLError } from 'graphql/error';
 import { RedisModule } from './redis/redis.module';
+import { GraphQLFormattedError } from 'graphql';
 
 @Module({
   imports: [
@@ -27,8 +27,8 @@ import { RedisModule } from './redis/redis.module';
       },
       context: ({ req }: { req: Request }) => ({ req }),
 
-      formatError: (error: GraphQLError) => {
-        const extensions = error.extensions as {
+      formatError: (formattedError: GraphQLFormattedError) => {
+        const extensions = formattedError.extensions as {
           originalError?: {
             statusCode?: number;
             message?: string;
@@ -39,7 +39,7 @@ import { RedisModule } from './redis/redis.module';
         return {
           status:
             extensions.originalError?.statusCode ?? extensions.status ?? 500,
-          message: extensions.originalError?.message ?? error.message,
+          message: extensions.originalError?.message ?? formattedError.message,
         };
       },
     }),

@@ -8,7 +8,7 @@ import {
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { verify } from 'jsonwebtoken';
 import { Request } from 'express';
-import { Role, User, UserRole } from 'generated/prisma/client';
+import { Role, User, UserRole } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 interface GqlContext {

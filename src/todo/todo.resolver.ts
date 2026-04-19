@@ -4,8 +4,8 @@ import { TodoService } from './todo.service';
 import { CreateTodoInput, UpdateTodoInput } from '../graphql';
 
 import { GqlAuthGuard, RolesGuard } from '../auth/gql.auth.guard';
-import { CurrentUser } from 'src/auth/currentUser.decorator';
-import { User, UserRole } from 'generated/prisma/client';
+import { CurrentUser } from '../auth/currentUser.decorator';
+import type { User, UserRole } from '../../generated/prisma/client';
 
 @Resolver('Todo')
 export class TodoResolver {
