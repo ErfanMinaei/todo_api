@@ -24,10 +24,9 @@ COPY package*.json ./
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 
-RUN npm ci --only=production
-
 ENV DATABASE_URL=mysql://dummy:dummy@dummy:3306/dummy
-RUN npx prisma generate
+
+RUN npm ci --only=production && npx prisma generate
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/generated ./generated
