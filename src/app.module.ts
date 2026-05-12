@@ -12,6 +12,7 @@ import { TodoModule } from './todo/todo.module';
 import { AuthModule } from './auth/auth.module';
 import { RedisModule } from './redis/redis.module';
 import { GraphQLFormattedError } from 'graphql';
+import { FileModule } from './file/file.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { GraphQLFormattedError } from 'graphql';
     TodoModule,
     AuthModule,
     RedisModule,
+    FileModule,
   ],
   controllers: [AppController],
   providers: [AppService],
