@@ -1,35 +1,34 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-
-export interface FileRecord {
-  id: string;
-  originalName: string;
-  storedName: string;
-  mimeType: string;
-  size: number;
-  uploadedAt: Date;
-}
+import { PrismaService } from '../prisma/prisma.service';
+import type { FileObject } from '../../generated/prisma/browser';
 
 @Injectable()
 export class FileService {
-  // In-memory store — replace with Prisma/DB persistence if needed
-  private readonly store = new Map<string, FileRecord>();
+  constructor(private readonly prisma: PrismaService) {}
 
-  saveFileRecord(file: Express.Multer.File): { id: string; message: string } {
+  async saveFileRecord(
+    file: Express.Multer.File,
+    path: string,
+  ): Promise<{ id: string; message: string }> {
     const id = randomUUID();
-    const record: FileRecord = {
-      id,
-      originalName: file.originalname,
-      storedName: file.filename,
-      mimeType: file.mimetype,
-      size: file.size,
-      uploadedAt: new Date(),
-    };
-    this.store.set(id, record);
+
+    await this.prisma.fileObject.create({
+      data: {
+        id,
+        originalName: file.originalname,
+        storedName: file.filename,
+        path,
+        mimeType: file.mimetype,
+        size: file.size,
+        uploadedAt: new Date(),
+      },
+    });
+
     return { id, message: 'File uploaded successfully' };
   }
 
-  getFileRecord(id: string): FileRecord | undefined {
-    return this.store.get(id);
+  getFileRecord(id: string): Promise<FileObject | null> {
+    return this.prisma.fileObject.findUnique({ where: { id } });
   }
 }

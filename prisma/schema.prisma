@@ -59,3 +59,13 @@ model Todo {
   todoListId Int
   todoList   UserTodoList @relation(fields: [todoListId], references: [id], onDelete: Cascade)
 }
+
+model FileObject {
+  id           String   @id
+  originalName String
+  storedName   String
+  path   String
+  mimeType     String
+  size         Int
+  uploadedAt   DateTime
+}

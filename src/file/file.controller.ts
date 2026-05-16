@@ -11,9 +11,11 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { FileService } from './file.service';
-import { extname } from 'node:path';
+import { extname, resolve } from 'node:path';
+
+const UPLOAD_DIR = resolve(process.cwd(), 'uploads');
 
 @Controller('file')
 export class FileController {
@@ -22,28 +24,39 @@ export class FileController {
   @Put('upload')
   @UseInterceptors(
     FileInterceptor('file', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (_req, file, cb) => {
+      // eslint-disable-next-line prettier/prettier
+      storage: diskStorage({// NOSONAR
+        destination: UPLOAD_DIR,
+        filename: (
+          req: Request,
+          file: Express.Multer.File,
+          cb: (error: Error | null, filename: string) => void,
+        ) => {
           const uniqueSuffix =
             Date.now() + '-' + Math.round(Math.random() * 1e9);
           const ext = extname(file.originalname);
           cb(null, `${uniqueSuffix}${ext}`);
         },
       }),
-      limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+      limits: {
+        fileSize:
+          Number.parseInt(process.env.FILE_MAX_SIZE_MB ?? '10', 10) *
+          1024 *
+          1024,
+      },
     }),
   )
-  uploadFile(@UploadedFile() file: Express.Multer.File) {
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
     if (!file) {
       throw new BadRequestException('No file provided');
     }
-    return this.fileService.saveFileRecord(file);
+    const absolutePath = resolve(UPLOAD_DIR, file.filename);
+    return this.fileService.saveFileRecord(file, absolutePath);
   }
 
   @Get('read/:id')
-  readFile(@Param('id') id: string, @Res() res: Response) {
-    const record = this.fileService.getFileRecord(id);
+  async readFile(@Param('id') id: string, @Res() res: Response) {
+    const record = await this.fileService.getFileRecord(id);
     if (!record) {
       throw new NotFoundException(`File with id "${id}" not found`);
     }
@@ -51,6 +64,6 @@ export class FileController {
       'Content-Disposition',
       `attachment; filename="${record.originalName}"`,
     );
-    res.sendFile(record.storedName, { root: './uploads' });
+    res.sendFile(record.path);
   }
 }
