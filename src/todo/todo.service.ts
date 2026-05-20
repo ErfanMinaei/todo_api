@@ -174,4 +174,10 @@ export class TodoService {
 
     return true;
   }
+
+  async findAttachmentsByTodoId(todoId: number) {
+    return this.prisma.fileObject.findMany({
+      where: { todoId },
+    });
+  }
 }

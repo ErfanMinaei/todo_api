@@ -122,6 +122,16 @@ export abstract class IMutation {
     abstract demoteFromAdmin(userId: number): User | Promise<User>;
 }
 
+export class FileObject {
+    id: string;
+    originalName: string;
+    storedName: string;
+    path: string;
+    mimeType: string;
+    size: number;
+    uploadedAt: DateTime;
+}
+
 export class Todo {
     id: number;
     title: string;
@@ -130,6 +140,7 @@ export class Todo {
     deadline: DateTime;
     todoListId: number;
     todoList: TodoList;
+    attachments: FileObject[];
 }
 
 export abstract class IQuery {

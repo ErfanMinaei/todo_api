@@ -1,4 +1,11 @@
-import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import {
+  Resolver,
+  Query,
+  Mutation,
+  Args,
+  ResolveField,
+  Parent,
+} from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { TodoService } from './todo.service';
 import { CreateTodoInput, UpdateTodoInput } from '../graphql';
@@ -46,6 +53,11 @@ export class TodoResolver {
   @UseGuards(GqlAuthGuard)
   async deleteTodo(@Args('id') id: number) {
     return this.todosService.delete(id);
+  }
+
+  @ResolveField('attachments')
+  async getAttachments(@Parent() todo: { id: number }) {
+    return this.todosService.findAttachmentsByTodoId(todo.id);
   }
 
   // ---------- ADMIN ----------

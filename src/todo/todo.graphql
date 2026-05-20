@@ -6,6 +6,7 @@ type Todo {
   deadline: DateTime!
   todoListId: Int!
   todoList: TodoList!
+  attachments: [FileObject!]!
 }
 
 scalar DateTime
