@@ -83,6 +83,8 @@ export abstract class IMutation {
 
     abstract logout(refreshToken: string): boolean | Promise<boolean>;
 
+    abstract unattachFile(id: string): boolean | Promise<boolean>;
+
     abstract createTodo(input: CreateTodoInput): Todo | Promise<Todo>;
 
     abstract updateTodo(id: number, input: UpdateTodoInput): Todo | Promise<Todo>;

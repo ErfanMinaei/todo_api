@@ -11,6 +11,7 @@ import {
   BadRequestException,
   Res,
   Req,
+  Delete,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -18,7 +19,7 @@ import { Response, Request } from 'express';
 import { FileService } from './file.service';
 import { extname, resolve } from 'node:path';
 import { JwtRestGuard } from '../auth/jwt.auth.guard';
-import { User } from '../../generated/prisma/client';
+import { User, UserRole } from '../../generated/prisma/client';
 
 const UPLOAD_DIR = resolve(process.cwd(), 'uploads');
 
@@ -89,5 +90,10 @@ export class FileController {
       `attachment; filename="${record.originalName}"`,
     );
     res.sendFile(record.path);
+  }
+  @Delete(':id')
+  async unattachFile(@Param('id') id: string, @Req() req: Request) {
+    const user = req.user as User & { userRoles?: UserRole[] };
+    return this.fileService.deleteFileRecordAndFile(id, user);
   }
 }
