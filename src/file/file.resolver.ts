@@ -3,7 +3,7 @@ import { UseGuards } from '@nestjs/common';
 import { GqlAuthGuard } from '../auth/gql.auth.guard';
 import { CurrentUser } from '../auth/currentUser.decorator';
 import { FileService } from './file.service';
-import { User, UserRole } from '../../generated/prisma/client';
+import { User } from '../../generated/prisma/client';
 
 @Resolver()
 export class FileResolver {
@@ -13,9 +13,9 @@ export class FileResolver {
   @UseGuards(GqlAuthGuard)
   async unattachFile(
     @Args('id') id: string,
-    @CurrentUser() user: User & { userRoles?: UserRole[] },
+    @CurrentUser() user: User,
   ): Promise<boolean> {
-    await this.fileService.deleteFileRecordAndFile(id, user);
+    await this.fileService.deleteFile(id, user.id);
     return true;
   }
 }
