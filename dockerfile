@@ -6,10 +6,12 @@ RUN apt-get update -y && apt-get install -y openssl
 COPY package*.json ./
 COPY prisma ./prisma
 COPY prisma.config.ts ./
+RUN mv prisma.config.ts prisma.config.ts.bak
 
 ENV DATABASE_URL=mysql://dummy:dummy@dummy:3306/dummy
 
 RUN npm install --ignore-scripts
+RUN rm -rf node_modules/.prisma node_modules/@prisma
 ENV PRISMA_CLIENT_ENGINE_TYPE=library
 ENV PRISMA_CLIENT_OUTPUT_DIR=./node_modules/@prisma/client
 RUN npx prisma generate --schema=./prisma/schema.prisma
