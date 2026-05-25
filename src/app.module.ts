@@ -13,6 +13,7 @@ import { AuthModule } from './auth/auth.module';
 import { RedisModule } from './redis/redis.module';
 import { GraphQLFormattedError } from 'graphql';
 import { FileModule } from './file/file.module';
+import { MinioModule } from './minio/minio.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { FileModule } from './file/file.module';
     AuthModule,
     RedisModule,
     FileModule,
+    MinioModule,
   ],
   controllers: [AppController],
   providers: [AppService],

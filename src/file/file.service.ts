@@ -1,128 +1,156 @@
 import {
   Injectable,
-  BadRequestException,
   NotFoundException,
+  ForbiddenException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
-import { unlink } from 'node:fs/promises';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  Role,
-  User,
-  UserRole,
-  type FileObject,
-} from '../../generated/prisma/browser';
-
-export interface SaveFileOptions {
-  todoId: number;
-  userId: number;
-}
+import { InjectMinio } from '../minio/minio.decorator';
+import * as Minio from 'minio';
 
 @Injectable()
 export class FileService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly _bucketName: string;
 
-  async saveFileRecord(
-    file: Express.Multer.File,
-    path: string,
-    options: SaveFileOptions,
-  ): Promise<{ id: string; message: string }> {
-    const { todoId, userId } = options;
+  constructor(
+    @InjectMinio() private readonly minioService: Minio.Client,
+    private readonly prisma: PrismaService,
+  ) {
+    const bucket = process.env.MINIO_BUCKET;
+    if (!bucket) {
+      throw new Error('MINIO_BUCKET environment variable is not defined');
+    }
+    this._bucketName = bucket;
+  }
 
+  async uploadFile(file: Express.Multer.File, todoId: number, userId: number) {
     const todo = await this.prisma.todo.findFirst({
-      where: {
-        id: todoId,
-        todoList: {
-          userId: userId,
-        },
-      },
-      select: { id: true },
+      where: { id: todoId, todoList: { userId } },
     });
 
     if (!todo) {
-      throw new BadRequestException(
-        `Todo with id ${todoId} not found or does not belong to you`,
+      throw new ForbiddenException('Access denied');
+    }
+
+    const storedName = `${randomUUID()}-${file.originalname}`;
+
+    try {
+      await this.minioService.putObject(
+        this._bucketName,
+        storedName,
+        file.buffer,
+        file.size,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new InternalServerErrorException(
+        `Failed to upload file to MinIO: ${message}`,
       );
     }
 
-    const id = randomUUID();
-
-    await this.prisma.fileObject.create({
+    const fileRecord = await this.prisma.fileObject.create({
       data: {
-        id,
+        id: randomUUID(),
         originalName: file.originalname,
-        storedName: file.filename,
-        path,
+        storedName: storedName,
+        path: storedName,
         mimeType: file.mimetype,
         size: file.size,
         uploadedAt: new Date(),
-        todoId,
+        todoId: todoId,
       },
     });
 
-    return { id, message: 'File uploaded successfully' };
+    return {
+      id: fileRecord.id,
+      originalName: file.originalname,
+      message: 'File uploaded successfully',
+    };
   }
 
-  async getFileRecordForUser(
-    id: string,
-    userId: number,
-  ): Promise<FileObject | null> {
-    const file = await this.prisma.fileObject.findUnique({
-      where: { id },
-      include: {
+  async getFileUrl(fileId: string, userId: number): Promise<string> {
+    const file = await this.prisma.fileObject.findFirst({
+      where: {
+        id: fileId,
         todo: {
-          include: {
-            todoList: true,
-          },
-        },
-      },
-    });
-
-    if (!file) return null;
-    if (file.todo?.todoList.userId !== userId) {
-      return null;
-    }
-    return file;
-  }
-
-  async deleteFileRecordAndFile(
-    id: string,
-    user: User & { userRoles?: UserRole[] },
-  ): Promise<{ message: string }> {
-    const file = await this.prisma.fileObject.findUnique({
-      where: { id },
-      include: {
-        todo: {
-          include: {
-            todoList: true,
+          todoList: {
+            userId: userId,
           },
         },
       },
     });
 
     if (!file) {
-      throw new NotFoundException(`File with id "${id}" not found`);
-    }
-
-    const isSuperAdmin =
-      user.userRoles?.some((r) => r.role === Role.SUPERADMIN) ?? false;
-
-    if (!isSuperAdmin) {
-      if (file.todo?.todoList.userId !== user.id) {
-        throw new BadRequestException(
-          'File is not attached to any todo you own or does not exist',
-        );
-      }
+      throw new NotFoundException('File not found');
     }
 
     try {
-      await unlink(file.path);
-    } catch (err) {
-      console.error(`Failed to delete physical file at ${file.path}:`, err);
+      const presignedUrl = await this.minioService.presignedUrl(
+        'GET',
+        this._bucketName,
+        file.storedName,
+        60 * 60,
+      );
+      return presignedUrl;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new InternalServerErrorException(
+        `Failed to generate file URL: ${message}`,
+      );
+    }
+  }
+
+  async deleteFile(fileId: string, userId: number): Promise<void> {
+    const file = await this.prisma.fileObject.findFirst({
+      where: {
+        id: fileId,
+        todo: {
+          todoList: {
+            userId: userId,
+          },
+        },
+      },
+    });
+
+    if (!file) {
+      throw new NotFoundException('File not found');
     }
 
-    await this.prisma.fileObject.delete({ where: { id } });
+    try {
+      await this.minioService.removeObject(this._bucketName, file.storedName);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new InternalServerErrorException(
+        `Failed to delete file from MinIO: ${message}`,
+      );
+    }
 
-    return { message: 'File unattached and deleted successfully' };
+    await this.prisma.fileObject.delete({
+      where: { id: fileId },
+    });
+  }
+
+  async listFilesForTodo(todoId: number, userId: number) {
+    const todo = await this.prisma.todo.findFirst({
+      where: { id: todoId, todoList: { userId } },
+    });
+
+    if (!todo) {
+      throw new ForbiddenException('Access denied');
+    }
+
+    const files = await this.prisma.fileObject.findMany({
+      where: { todoId },
+      select: {
+        id: true,
+        originalName: true,
+        mimeType: true,
+        size: true,
+        uploadedAt: true,
+      },
+    });
+
+    return files;
   }
 }

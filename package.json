@@ -38,6 +38,7 @@
     "@prisma/client": "^7.8.0",
     "bcrypt": "^6.0.0",
     "graphql": "^16.12.0",
+    "minio": "^8.0.7",
     "mysql2": "^3.22.3",
     "prisma": "^7.8.0",
     "redis": "^5.11.0",
