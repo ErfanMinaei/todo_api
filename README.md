@@ -1,98 +1,912 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
-
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+# README
 
 ## Project setup
 
-```bash
-$ npm install
-```
-
-## Compile and run the project
+The project is fully dockerized. Start all services with:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+docker compose up -d
 ```
 
-## Run tests
+This will start the NestJS API, MySQL database, Redis, and MinIO (for file storage). The API will be available at `http://localhost:3000`. GraphQL playground can be accessed at `http://localhost:3000/graphql`.
+
+## Database seeding
+
+Insert a superadmin user and assign roles. Run these commands exactly as shown:
 
 ```bash
-# unit tests
-$ npm run test
+# Insert superadmin user
+sudo docker compose exec mysql mysql -uroot -ppassword todo_db -e " INSERT INTO User (firstName, lastName, username, password) VALUES ('Super', 'Admin', 'superadmin', '$2b$10$r5efauCMg9Kj9WAzD8RHv.nnSfzhWn61XS4PxRDdJVCTt9SQxZ5Wa'); "
 
-# e2e tests
-$ npm run test:e2e
+# Assign roles
+sudo docker compose exec mysql mysql -uroot -ppassword todo_db -e " INSERT INTO UserRole (userId, role) SELECT id, 'SUPERADMIN' FROM User WHERE username='superadmin' UNION ALL SELECT id, 'ADMIN' FROM User WHERE username='superadmin' UNION ALL SELECT id, 'USER' FROM User WHERE username='superadmin'; "
 
-# test coverage
-$ npm run test:cov
+# Verify
+sudo docker compose exec mysql mysql -uroot -ppassword todo_db -e "SELECT u.username, ur.role FROM User u JOIN UserRole ur ON u.id=ur.userId;"
 ```
 
-## Deployment
+## Authentication
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+Most endpoints (both REST and GraphQL) require a valid JWT access token. To authenticate:
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+1. Call the `login` or `register` mutation to receive an `accessToken` and `refreshToken`.
+2. Include the `accessToken` in the `Authorization` header as a Bearer token:
+   ```
+   Authorization: Bearer <accessToken>
+   ```
+
+## REST API
+
+| Method | Endpoint               | Description                                                                 | Authentication |
+|--------|------------------------|-----------------------------------------------------------------------------|----------------|
+| PUT    | `/file/upload?todoId=…`| Upload a file and attach it to a specific todo (multipart/form-data, field `file`). | Required |
+| GET    | `/file/url/:id`        | Get a presigned URL to download the file.                                  | Required |
+| DELETE | `/file/:id`            | Delete a file (also removes it from MinIO and database).                   | Required |
+| GET    | `/`                    | Health check – returns "Hello World".                                      | None |
+
+### Examples
+
+**Upload a file**
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+curl -X PUT "http://localhost:3000/file/upload?todoId=1" \
+  -H "Authorization: Bearer <accessToken>" \
+  -F "file=@/path/to/document.pdf"
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+**Response**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "originalName": "document.pdf",
+  "message": "File uploaded successfully"
+}
+```
 
-## Resources
+**Get file URL**
 
-Check out a few resources that may come in handy when working with NestJS:
+```bash
+curl -X GET "http://localhost:3000/file/url/550e8400-e29b-41d4-a716-446655440000" \
+  -H "Authorization: Bearer <accessToken>"
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+**Response**
+```json
+{
+  "url": "https://minio.example.com/bucket/...?X-Amz-Expires=3600..."
+}
+```
 
-## Support
+**Delete file**
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+curl -X DELETE "http://localhost:3000/file/550e8400-e29b-41d4-a716-446655440000" \
+  -H "Authorization: Bearer <accessToken>"
+```
 
-## Stay in touch
+**Response**
+```json
+{
+  "message": "File deleted successfully"
+}
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## GraphQL API
 
-## License
+All GraphQL operations are available at `http://localhost:3000/graphql`.  
+Use the `Authorization: Bearer <accessToken>` header for protected operations.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### Queries
+
+#### `todos`
+Get all todos for a specific todo list (owned by the authenticated user).
+
+```graphql
+query GetTodos($todoListId: Int!) {
+  todos(todoListId: $todoListId) {
+    id
+    title
+    description
+    isDone
+    deadline
+    attachments {
+      id
+      originalName
+      mimeType
+      size
+    }
+  }
+}
+```
+**Variables**
+```json
+{ "todoListId": 1 }
+```
+**Response**
+```json
+{
+  "data": {
+    "todos": [
+      {
+        "id": 1,
+        "title": "Buy groceries",
+        "description": "Milk, eggs, bread",
+        "isDone": false,
+        "deadline": "2026-12-31T23:59:59.000Z",
+        "attachments": []
+      }
+    ]
+  }
+}
+```
+
+#### `todo`
+Get a single todo by ID.
+
+```graphql
+query GetTodo($id: Int!) {
+  todo(id: $id) {
+    id
+    title
+    description
+    isDone
+    deadline
+    todoList { title }
+  }
+}
+```
+**Variables**
+```json
+{ "id": 1 }
+```
+
+#### `adminTodos` (Roles: ADMIN, SUPERADMIN)
+List todos of a todo list, even if it belongs to another user (subject to role restrictions).
+
+```graphql
+query AdminTodos($todoListId: Int!) {
+  adminTodos(todoListId: $todoListId) {
+    id
+    title
+    todoList { title user { username } }
+  }
+}
+```
+**Variables**
+```json
+{ "todoListId": 2 }
+```
+
+#### `todoLists`
+Get all todo lists belonging to the authenticated user.
+
+```graphql
+query GetMyTodoLists {
+  todoLists {
+    id
+    title
+    createdAt
+    todos { id title isDone }
+  }
+}
+```
+**Variables** – none.
+
+#### `userTodoLists` (Roles: ADMIN, SUPERADMIN)
+Get todo lists of a specific user.
+
+```graphql
+query GetUserTodoLists($userId: Int!) {
+  userTodoLists(userId: $userId) {
+    id
+    title
+    user { username }
+    todos { id }
+  }
+}
+```
+**Variables**
+```json
+{ "userId": 2 }
+```
+
+#### `allUsers` (Roles: ADMIN, SUPERADMIN)
+List all users (password included for ADMIN/SUPERADMIN).
+
+```graphql
+query GetAllUsers {
+  allUsers {
+    id
+    username
+    firstName
+    lastName
+    roles
+  }
+}
+```
+**Variables** – none.
+
+### Mutations
+
+#### `login`
+Authenticate and receive tokens.
+
+```graphql
+mutation Login($input: LoginInput!) {
+  login(input: $input) {
+    accessToken
+    refreshToken
+    user {
+      id
+      username
+      roles
+    }
+  }
+}
+```
+**Variables**
+```json
+{ "input": { "username": "superadmin", "password": "password123" } }
+```
+**Response**
+```json
+{
+  "data": {
+    "login": {
+      "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+      "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
+      "user": { "id": 1, "username": "superadmin", "roles": ["SUPERADMIN","ADMIN","USER"] }
+    }
+  }
+}
+```
+
+#### `register`
+Create a new regular user.
+
+```graphql
+mutation Register($input: RegisterUserInput!) {
+  register(input: $input) {
+    accessToken
+    refreshToken
+    user { id username roles }
+  }
+}
+```
+**Variables**
+```json
+{ "input": { "firstName": "John", "lastName": "Doe", "username": "johndoe", "password": "secret" } }
+```
+
+#### `refresh`
+Get new access/refresh tokens using a valid refresh token.
+
+```graphql
+mutation Refresh($refreshToken: String!) {
+  refresh(refreshToken: $refreshToken) {
+    accessToken
+    refreshToken
+  }
+}
+```
+**Variables**
+```json
+{ "refreshToken": "eyJhbGciOiJIUzI1NiIs..." }
+```
+
+#### `logout`
+Invalidate a refresh token (log out one device).
+
+```graphql
+mutation Logout($refreshToken: String!) {
+  logout(refreshToken: $refreshToken)
+}
+```
+**Variables**
+```json
+{ "refreshToken": "eyJhbGciOiJIUzI1NiIs..." }
+```
+
+#### `createTodo`
+Create a new todo inside a todo list owned by the current user.
+
+```graphql
+mutation CreateTodo($input: CreateTodoInput!) {
+  createTodo(input: $input) {
+    id
+    title
+    deadline
+  }
+}
+```
+**Variables**
+```json
+{ "input": { "title": "Finish report", "description": "Write Q3 summary", "deadline": "2026-07-01T12:00:00Z", "todoListId": 1 } }
+```
+
+#### `updateTodo`
+Update an existing todo (only fields provided are updated).
+
+```graphql
+mutation UpdateTodo($id: Int!, $input: UpdateTodoInput!) {
+  updateTodo(id: $id, input: $input) {
+    id
+    title
+    isDone
+  }
+}
+```
+**Variables**
+```json
+{ "id": 1, "input": { "isDone": true } }
+```
+
+#### `deleteTodo`
+Delete a todo.
+
+```graphql
+mutation DeleteTodo($id: Int!) {
+  deleteTodo(id: $id)
+}
+```
+**Variables**
+```json
+{ "id": 1 }
+```
+
+#### `adminCreateTodo`, `adminUpdateTodo`, `adminDeleteTodo` (Roles: ADMIN/SUPERADMIN)
+Same as above but can act on todos of other users (subject to role restrictions – ADMINS cannot modify SUPERADMIN or other ADMIN’s todos).
+
+```graphql
+mutation AdminCreateTodo($input: CreateTodoInput!) {
+  adminCreateTodo(input: $input) { id title }
+}
+```
+
+#### `createTodoList`
+Create a new todo list for the authenticated user.
+
+```graphql
+mutation CreateTodoList($input: CreateTodoListInput!) {
+  createTodoList(input: $input) {
+    id
+    title
+  }
+}
+```
+**Variables**
+```json
+{ "input": { "title": "Work tasks" } }
+```
+
+#### `updateTodoList`
+Rename a todo list.
+
+```graphql
+mutation UpdateTodoList($id: Int!, $input: UpdateTodoListInput!) {
+  updateTodoList(id: $id, input: $input) {
+    id
+    title
+  }
+}
+```
+**Variables**
+```json
+{ "id": 1, "input": { "title": "Home chores" } }
+```
+
+#### `deleteTodoList`
+Delete a todo list (cascades to its todos and file attachments).
+
+```graphql
+mutation DeleteTodoList($id: Int!) {
+  deleteTodoList(id: $id)
+}
+```
+**Variables**
+```json
+{ "id": 1 }
+```
+
+#### `adminCreateTodoList`, `adminUpdateTodoList`, `adminDeleteTodoList` (Roles: ADMIN/SUPERADMIN)
+Admin versions – can manage any user’s todo lists (with same role restrictions).
+
+```graphql
+mutation AdminCreateTodoList($userId: Int!, $input: CreateTodoListInput!) {
+  adminCreateTodoList(userId: $userId, input: $input) { id title }
+}
+```
+**Variables**
+```json
+{ "userId": 2, "input": { "title": "Project alpha" } }
+```
+
+#### `updateSelf`
+Update the authenticated user’s profile. To change password, provide `currentPassword` and `newPassword`.
+
+```graphql
+mutation UpdateSelf($input: UpdateUserInput!) {
+  updateSelf(input: $input) {
+    id
+    username
+    firstName
+    lastName
+  }
+}
+```
+**Variables**
+```json
+{ "input": { "firstName": "Jonathan", "currentPassword": "oldPass", "newPassword": "newPass123" } }
+```
+
+#### `deleteSelf`
+Delete the authenticated user’s own account.
+
+```graphql
+mutation DeleteSelf {
+  deleteSelf
+}
+```
+**Variables** – none.
+
+#### `createAdmin` (Role: SUPERADMIN)
+Create a new admin user.
+
+```graphql
+mutation CreateAdmin($input: RegisterUserInput!) {
+  createAdmin(input: $input) {
+    id
+    username
+    roles
+  }
+}
+```
+**Variables**
+```json
+{ "input": { "firstName": "Alice", "username": "alice_admin", "password": "secure" } }
+```
+
+#### `promoteToAdmin` (Role: SUPERADMIN)
+Grant ADMIN role to an existing user.
+
+```graphql
+mutation PromoteToAdmin($userId: Int!) {
+  promoteToAdmin(userId: $userId) {
+    id
+    username
+    roles
+  }
+}
+```
+**Variables**
+```json
+{ "userId": 3 }
+```
+
+#### `demoteFromAdmin` (Role: SUPERADMIN)
+Remove ADMIN role from a user.
+
+```graphql
+mutation DemoteFromAdmin($userId: Int!) {
+  demoteFromAdmin(userId: $userId) {
+    id
+    roles
+  }
+}
+```
+**Variables**
+```json
+{ "userId": 3 }
+```
+
+#### `updateUser` (Roles: ADMIN, SUPERADMIN)
+Update another user’s profile. SUPERADMIN can update anyone; ADMIN can only update regular users.
+
+```graphql
+mutation UpdateUser($userId: Int!, $input: UpdateUserByAdminInput!) {
+  updateUser(userId: $userId, input: $input) {
+    id
+    username
+    firstName
+  }
+}
+```
+**Variables**
+```json
+{ "userId": 2, "input": { "firstName": "Jane", "newPassword": "newsecret" } }
+```
+
+#### `deleteUser` (Roles: ADMIN, SUPERADMIN)
+Delete another user. Cannot delete SUPERADMIN.
+
+```graphql
+mutation DeleteUser($userId: Int!) {
+  deleteUser(userId: $userId)
+}
+```
+**Variables**
+```json
+{ "userId": 4 }
+```
+
+#### `unattachFile`
+Detach a file from a todo and delete the file from storage (same as REST DELETE).
+
+```graphql
+mutation UnattachFile($id: String!) {
+  unattachFile(id: $id)
+}
+```
+**Variables**
+```json
+{ "id": "550e8400-e29b-41d4-a716-446655440000" }
+```
+
+## Postman collection
+
+Below is a complete Postman collection v2.1 that includes all REST endpoints and GraphQL operations.  
+To use it:
+
+1. Save the JSON as `todo_api.postman_collection.json`.
+2. Import into Postman.
+3. The collection includes a variable `baseUrl` (default `http://localhost:3000`).
+4. Use the **Login** request to obtain tokens; the collection has an **auth** folder with requests that automatically set the bearer token (you can enable token inheritance at collection level).
+
+```json
+{
+  "info": {
+    "name": "Todo API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "REST",
+      "item": [
+        {
+          "name": "Upload file",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "/path/to/sample.pdf"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/file/upload?todoId=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["file", "upload"],
+              "query": [
+                {
+                  "key": "todoId",
+                  "value": "1"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get file URL",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/file/url/{{fileId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["file", "url", "{{fileId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete file",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/file/{{fileId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["file", "{{fileId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "GraphQL",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation Login($input: LoginInput!) { login(input: $input) { accessToken refreshToken user { id username roles } } }\",\n  \"variables\": {\n    \"input\": {\n      \"username\": \"superadmin\",\n      \"password\": \"password123\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation Refresh($refreshToken: String!) { refresh(refreshToken: $refreshToken) { accessToken refreshToken } }\",\n  \"variables\": {\n    \"refreshToken\": \"{{refreshToken}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation Logout($refreshToken: String!) { logout(refreshToken: $refreshToken) }\",\n  \"variables\": {\n    \"refreshToken\": \"{{refreshToken}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Get my todo lists",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query { todoLists { id title createdAt todos { id title isDone } } }\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Create todo list",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation CreateTodoList($input: CreateTodoListInput!) { createTodoList(input: $input) { id title } }\",\n  \"variables\": {\n    \"input\": { \"title\": \"My new list\" }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Create todo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation CreateTodo($input: CreateTodoInput!) { createTodo(input: $input) { id title deadline } }\",\n  \"variables\": {\n    \"input\": {\n      \"title\": \"Write documentation\",\n      \"description\": \"Explain the API\",\n      \"deadline\": \"2026-08-01T10:00:00Z\",\n      \"todoListId\": 1\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Update todo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation UpdateTodo($id: Int!, $input: UpdateTodoInput!) { updateTodo(id: $id, input: $input) { id isDone } }\",\n  \"variables\": {\n    \"id\": 1,\n    \"input\": { \"isDone\": true }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Delete todo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation DeleteTodo($id: Int!) { deleteTodo(id: $id) }\",\n  \"variables\": {\n    \"id\": 1\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Unattach file",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"mutation UnattachFile($id: String!) { unattachFile(id: $id) }\",\n  \"variables\": {\n    \"id\": \"{{fileId}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Admin - Get all users",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"query { allUsers { id username roles } }\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+```
