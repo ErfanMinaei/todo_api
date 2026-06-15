@@ -38,8 +38,8 @@ export class TodoListsResolver {
 
   @Mutation('deleteTodoList')
   @UseGuards(GqlAuthGuard)
-  async deleteTodo(@Args('id') id: number) {
-    return this.todoListsService.delete(id);
+  async deleteTodoList(@Args('id') id: number, @CurrentUser() user: User) {
+    return this.todoListsService.delete(id, user.id);
   }
 
   @UseGuards(GqlAuthGuard, new RolesGuard(['ADMIN', 'SUPERADMIN']))

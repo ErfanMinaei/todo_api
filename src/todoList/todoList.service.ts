@@ -41,7 +41,17 @@ export class TodoListsService {
     });
   }
 
-  async delete(id: number) {
+  async delete(id: number, userId: number) {
+    const todoList = await this.prisma.userTodoList.findUnique({
+      where: { id },
+      select: { userId: true },
+    });
+    if (!todoList) {
+      throw new NotFoundException('TodoList not found');
+    }
+    if (todoList.userId !== userId) {
+      throw new ForbiddenException('You can only delete your own todo lists');
+    }
     await this.prisma.userTodoList.delete({ where: { id } });
     return true;
   }
