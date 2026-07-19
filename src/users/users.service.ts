@@ -42,9 +42,31 @@ export class UsersService {
     return users.map((user) => this.formatUser(user));
   }
 
-  async deleteUser(userId: number) {
+  private async deleteUserById(userId: number): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      include: { userRoles: true },
+    });
+
+    if (!user) throw new NotFoundException('User not found');
+
+    const isSuperAdmin = user.userRoles.some((ur) => ur.role === 'SUPERADMIN');
+    if (isSuperAdmin) {
+      throw new ForbiddenException(
+        'SuperAdmin cannot delete their own account',
+      );
+    }
+
     await this.prisma.user.delete({ where: { id: userId } });
     return true;
+  }
+
+  async deleteUser(userId: number) {
+    return this.deleteUserById(userId);
+  }
+
+  async deleteSelf(userId: number) {
+    return this.deleteUserById(userId);
   }
 
   async updateUser(
@@ -94,25 +116,6 @@ export class UsersService {
       }
       throw e;
     }
-  }
-
-  async deleteSelf(userId: number) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: { userRoles: true },
-    });
-
-    if (!user) throw new NotFoundException('User not found');
-
-    const isSuperAdmin = user.userRoles.some((ur) => ur.role === 'SUPERADMIN');
-    if (isSuperAdmin) {
-      throw new ForbiddenException(
-        'SuperAdmin cannot delete their own account',
-      );
-    }
-
-    await this.prisma.user.delete({ where: { id: userId } });
-    return true;
   }
 
   async updateSelf(

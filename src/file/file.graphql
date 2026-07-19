@@ -1,0 +1,13 @@
+type FileObject {
+  id: String!
+  originalName: String!
+  storedName: String!
+  path: String!
+  mimeType: String!
+  size: Int!
+  uploadedAt: DateTime!
+}
+
+type Mutation {
+  unattachFile(id: String!): Boolean!
+}

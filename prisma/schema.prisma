@@ -42,20 +42,34 @@ model UserTodoList {
   id        Int      @id @default(autoincrement())
   title     String
   createdAt DateTime @default(now())
-
-  userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  todos Todo[]
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  todos     Todo[]
 }
 
 model Todo {
-  id          Int      @id @default(autoincrement())
+  id          Int          @id @default(autoincrement())
   title       String
-  description String   @db.Text
-  isDone      Boolean  @default(false)
+  description String       @db.Text
+  isDone      Boolean      @default(false)
   deadline    DateTime
+  todoListId  Int
+  todoList    UserTodoList @relation(fields: [todoListId], references: [id], onDelete: Cascade)
 
-  todoListId Int
-  todoList   UserTodoList @relation(fields: [todoListId], references: [id], onDelete: Cascade)
+  attachments FileObject[]
+}
+
+model FileObject {
+  id           String   @id
+  originalName String
+  storedName   String
+  path         String
+  mimeType     String
+  size         Int
+  uploadedAt   DateTime @default(now())
+
+  todoId Int?  @map("todo_id")
+  todo   Todo? @relation(fields: [todoId], references: [id], onDelete: Cascade)
+
+  @@index([todoId])
 }

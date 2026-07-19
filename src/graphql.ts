@@ -83,6 +83,8 @@ export abstract class IMutation {
 
     abstract logout(refreshToken: string): boolean | Promise<boolean>;
 
+    abstract unattachFile(id: string): boolean | Promise<boolean>;
+
     abstract createTodo(input: CreateTodoInput): Todo | Promise<Todo>;
 
     abstract updateTodo(id: number, input: UpdateTodoInput): Todo | Promise<Todo>;
@@ -122,6 +124,16 @@ export abstract class IMutation {
     abstract demoteFromAdmin(userId: number): User | Promise<User>;
 }
 
+export class FileObject {
+    id: string;
+    originalName: string;
+    storedName: string;
+    path: string;
+    mimeType: string;
+    size: number;
+    uploadedAt: DateTime;
+}
+
 export class Todo {
     id: number;
     title: string;
@@ -130,6 +142,7 @@ export class Todo {
     deadline: DateTime;
     todoListId: number;
     todoList: TodoList;
+    attachments: FileObject[];
 }
 
 export abstract class IQuery {
